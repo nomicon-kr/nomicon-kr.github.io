@@ -48,7 +48,7 @@ pub struct Vec<T> {
     cap: usize,
 }
 
-// 이 구현은 무량 타입을 제대로 다루지 못하니 주의하세요.
+// 이 구현은 영량 타입을 제대로 다루지 못하니 주의하세요.
 // Vec을 구현하는 챕터를 보세요.
 impl<T> Vec<T> {
     pub fn push(&mut self, elem: T) {
