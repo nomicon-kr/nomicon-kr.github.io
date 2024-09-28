@@ -34,7 +34,7 @@
 * [소유권 기반 자원 관리](obrm.md)
   * [생성자](constructors.md)
   * [소멸자](destructors.md)
-  * [Leaking](leaking.md)
+  * [누수](leaking.md)
 * [Unwinding](unwinding.md)
   * [Exception Safety](exception-safety.md)
   * [Poisoning](poisoning.md)
