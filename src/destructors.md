@@ -68,7 +68,7 @@ struct SuperBox<T> { my_box: Box<T> }
 impl<T> Drop for SuperBox<T> {
     fn drop(&mut self) {
         unsafe {
-            // 슈퍼 최적화: `my_box`를 `drop`하지 않고 
+            // 슈-퍼 최적화: `my_box`를 `drop`하지 않고 
             // 그 내용물을 해제합니다
             let c: NonNull<T> = self.my_box.ptr.into();
             Global.deallocate(c.cast::<u8>(), Layout::new::<T>());
@@ -105,10 +105,7 @@ enum Link {
 
 일반적으로는 여러분이 데이터 구조를 바꿀 때마다 `drop`을 추가/삭제하지 않아도 되기 때문에 이것은 매우 좋게 동작합니다. 하지만, 여전히 소멸자를 가지고 좀더 복잡한 작업을 할 때의 많은 올바른 사용 사례가 확실히 있습니다.
 
-
-
-The classic safe solution to overriding recursive drop and allowing moving out
-of Self during `drop` is to use an Option:
+재귀적 해제를 수동으로 바꿔서 `drop` 중에 `Self`에서 필드를 이동하는 것을 허용하는 고전적인 안전한 방법은 `Option`을 사용하는 것입니다:
 
 ```rust
 #![feature(allocator_api, ptr_internals)]
@@ -134,9 +131,9 @@ struct SuperBox<T> { my_box: Option<Box<T>> }
 impl<T> Drop for SuperBox<T> {
     fn drop(&mut self) {
         unsafe {
-            // Hyper-optimized: deallocate the box's contents for it
-            // without `drop`ing the contents. Need to set the `box`
-            // field as `None` to prevent Rust from trying to Drop it.
+            // 슈-퍼 최적화: `my_box`를 `drop`하지 않고
+            // 그 내용물을 해제합니다. 러스트가 `my_box`를 `drop`하지 않도록
+            // 이 필드를 `None`으로 설정해야 합니다.
             let my_box = self.my_box.take().unwrap();
             let c: NonNull<T> = my_box.ptr.into();
             Global.deallocate(c.cast(), Layout::new::<T>());
@@ -144,18 +141,13 @@ impl<T> Drop for SuperBox<T> {
         }
     }
 }
-# fn main() {}
+fn main() {}
 ```
 
-However this has fairly odd semantics: you're saying that a field that *should*
-always be Some *may* be None, just because that happens in the destructor. Of
-course this conversely makes a lot of sense: you can call arbitrary methods on
-self during the destructor, and this should prevent you from ever doing so after
-deinitializing the field. Not that it will prevent you from producing any other
-arbitrarily invalid state in there.
+하지만 이것은 좀 이상한 의미를 담고 있습니다: 항상 `Some`이어야 *하는* 필드가 `None`일 *수도 있다는* 겁니다 (소멸자에서 이런 일이 일어나기 때문에요). 
+당연히 역으로는 말이 됩니다: 소멸자에서는 `self`에 임의의 메서드를 호출할 수 있고, 이렇게 하는 것이 필드를 비초기화한 후에 그 필드를 건드리지 못하게 합니다. 
+하지만 이렇게 할 때 그 필드에 다른 임의의 잘못된 상태를 만드는 것은 막지 못합니다.
 
-On balance this is an ok choice. Certainly what you should reach for by default.
-However, in the future we expect there to be a first-class way to announce that
-a field shouldn't be automatically dropped.
+득과 실을 비교했을 때 이것은 괜찮은 선택입니다. 분명히 기본적으로 해야 하는 방법이죠. 하지만 미래에는 필드가 자동으로 해제되면 안된다고 말하는, 공식적인 방법이 있기를 바랍니다.
 
 [Unique]: phantom-data.html
