@@ -11,32 +11,18 @@
 어떤 컬렉션을 프로그램의 시작 때에 초기화하고, 소멸자가 있는 객체들 덩어리로 채우고, 그것을 전혀 사용하지 않는 무한 이벤트 반복문에 들어가는 것은 꽤나 흔한 일입니다. 
 그 컬렉션은 쓸모 없이 앉아서 시간이나 때우겠죠, 프로그램이 종료될 때까지 귀중한 자원을 쥐고서요 (그 때에는 어차피 운영체제가 그 모든 자원들을 회수할 테니까요).
 
+우리는 좀더 제한된 형태의 누설을 생각할 수 있습니다: 접근할 수 없는 값을 해제하는 데 실패하는 것이죠. 러스트는 이것도 막지 않습니다. 사실 러스트에는 *이것을 하는 함수가 있습니다*: `mem::forget`입니다. 
+이 함수는 전달된 값을 소비하고 *그 소멸자를 실행하지 않습니다*.
 
+예전에는 `mem::forget`이 사용되지 말라는 뜻에서 `unsafe`로 표시되었는데, 소멸자를 호출하는 데 실패하는 것은 일반적으로 좋은 행동은 아니기 때문입니다 (어떤 불안전한 코드에서는 유용해도 말이죠). 
+하지만 이것은 비논리적인 행동으로 드러났습니다: 안전한 코드에서 소멸자를 호출하는 데 실패하는 방법은 엄청나게 많거든요. 가장 유명한 예제는 서로를 가리키는 `Rc<RefCell<T>>` 같은 것을 만드는 것입니다.
 
-We may consider a more restricted form of leak: failing to drop a value that is
-unreachable. Rust also doesn't prevent this. In fact Rust *has a function for
-doing this*: `mem::forget`. This function consumes the value it is passed *and
-then doesn't run its destructor*.
+안전한 코드는 소멸자 누설이 발생하지 않는다고 가정하는 게 합리적인데, 소멸자를 누설하는 프로그램은 아마도 잘못된 것이기 때문입니다. 하지만 *불안전한* 코드는 안전하기 위해서 소멸자가 실행하는 것에 의지할 수는 없습니다. 
+대부분의 타입은 이것과 상관이 없습니다: 만약 소멸자를 누설하면 그 타입은 정의에 의해 접근할 수 없게 되고, 따라서 별 문제가 없게 됩니다, 그렇죠? 
+예를 들어, 만약 `Box<u8>`을 누설한다면 메모리를 좀 낭비하기는 하겠지만 메모리 안전성을 침해할 일은 거의 없을 겁니다.
 
-In the past `mem::forget` was marked as unsafe as a sort of lint against using
-it, since failing to call a destructor is generally not a well-behaved thing to
-do (though useful for some special unsafe code). However this was generally
-determined to be an untenable stance to take: there are many ways to fail to
-call a destructor in safe code. The most famous example is creating a cycle of
-reference-counted pointers using interior mutability.
-
-It is reasonable for safe code to assume that destructor leaks do not happen, as
-any program that leaks destructors is probably wrong. However *unsafe* code
-cannot rely on destructors to be run in order to be safe. For most types this
-doesn't matter: if you leak the destructor then the type is by definition
-inaccessible, so it doesn't matter, right? For instance, if you leak a `Box<u8>`
-then you waste some memory but that's hardly going to violate memory-safety.
-
-However where we must be careful with destructor leaks are *proxy* types. These
-are types which manage access to a distinct object, but don't actually own it.
-Proxy objects are quite rare. Proxy objects you'll need to care about are even
-rarer. However we'll focus on three interesting examples in the standard
-library:
+하지만 *대리* 타입에서는 소멸자 누설을 주의해야 합니다. 이 타입들은 외부의 객체를 접근하는 것을 관리하지만, 그것을 실제로 소유하지는 않는 타입입니다. 대리 타입은 꽤 희귀합니다. 여러분이 신경써야 할 대리 객체들은 더더욱 희귀합니다.
+하지만 우리는 표준 라이브러리에 있는 3개의 흥미로운 예제에 집중하겠습니다:
 
 * `vec::Drain`
 * `Rc`
