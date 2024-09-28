@@ -30,58 +30,43 @@
 
 ## Drain
 
-`drain` is a collections API that moves data out of the container without
-consuming the container. This enables us to reuse the allocation of a `Vec`
-after claiming ownership over all of its contents. It produces an iterator
-(Drain) that returns the contents of the Vec by-value.
+`drain`은 컨테이너 타입을 소비하지 않고 그 컨테이너에서 데이터를 이동하는 컬렉션 API입니다. 이것을 이용하면 `Vec`의 내용물을 모두 회수한 뒤에 그 할당된 메모리를 재사용할 수 있게 되죠. 
+이것은 `Vec`의 내용물을 값으로 반환하는 반복자(`Drain`)을 만들어 냅니다.
 
-Now, consider Drain in the middle of iteration: some values have been moved out,
-and others haven't. This means that part of the Vec is now full of logically
-uninitialized data! We could backshift all the elements in the Vec every time we
-remove a value, but this would have pretty catastrophic performance
-consequences.
+이제 `Drain`을 반복하던 도중을 생각해 봅시다: 어떤 값들은 이동되었고, 나머지는 아닙니다. 이 뜻은 `Vec`의 일부분은 이제 논리적으로 미초기화된 데이터로 가득 차 있다는 겁니다! 
+우리는 값을 제거할 때마다 `Vec`의 모든 원소들을 앞으로 당길 수도 있겠지만, 그러면 꽤나 치명적인 성능 저하가 나타날 겁니다.
 
-Instead, we would like Drain to fix the Vec's backing storage when it is
-dropped. It should run itself to completion, backshift any elements that weren't
-removed (drain supports subranges), and then fix Vec's `len`. It's even
-unwinding-safe! Easy!
+그 대신, 우리는 `Drain`이 해제될 때 `Vec`의 할당된 메모리를 고치는 게 좋겠습니다. 이 소멸자는 `Drain` 자신의 반복을 끝내고, 삭제되지 않은 모든 원소들을 앞으로 당기고, `Vec`의 `len`을 고칩니다. 
+이것은 심지어 되감기에도 안전합니다! 쉽군요!
 
-Now consider the following:
+이제 다음의 코드를 생각해 보세요:
 
 <!-- ignore: simplified code -->
 ```rust,ignore
 let mut vec = vec![Box::new(0); 4];
 
 {
-    // start draining, vec can no longer be accessed
+    // `drain`을 시작합니다, `vec`은 더 이상 접근할 수 없습니다
     let mut drainer = vec.drain(..);
 
-    // pull out two elements and immediately drop them
+    // 2개의 원소들을 꺼내서 바로 해제시킵니다
     drainer.next();
     drainer.next();
 
-    // get rid of drainer, but don't call its destructor
+    // `drainer`를 없애지만, 소멸자를 호출하지는 않습니다
     mem::forget(drainer);
 }
 
-// Oops, vec[0] was dropped, we're reading a pointer into free'd memory!
+// 이런, `vec[0]` 은 해제되었는데, 우리는 해제된 메모리를 가리키는 포인터를 읽고 있습니다!
 println!("{}", vec[0]);
 ```
 
-This is pretty clearly Not Good. Unfortunately, we're kind of stuck between a
-rock and a hard place: maintaining consistent state at every step has an
-enormous cost (and would negate any benefits of the API). Failing to maintain
-consistent state gives us Undefined Behavior in safe code (making the API
-unsound).
+이건 꽤나 분명히 **좋지 않습니다**. 불행하게도, 우리는 진퇴양난의 상황에 빠졌습니다: 모든 단계에서 안정적인 상태를 유지하는 것은 엄청난 비용을 유발합니다 (그리고 API의 모든 장점을 상쇄하겠죠). 
+안정적인 상태를 유지하지 못하면 안전한 코드에서 **미정의 동작이** 나올 겁니다 (API가 불건전해지겠죠).
 
-So what can we do? Well, we can pick a trivially consistent state: set the Vec's
-len to be 0 when we start the iteration, and fix it up if necessary in the
-destructor. That way, if everything executes like normal we get the desired
-behavior with minimal overhead. But if someone has the *audacity* to
-mem::forget us in the middle of the iteration, all that does is *leak even more*
-(and possibly leave the Vec in an unexpected but otherwise consistent state).
-Since we've accepted that mem::forget is safe, this is definitely safe. We call
-leaks causing more leaks a *leak amplification*.
+그럼 우리는 어떻게 할까요? 음, 우리는 자명하게 안정적인 상태를 고를 수 있습니다: 반복을 시작할 때 `Vec`의 `len`을 0으로 만들고, 소멸자에서 필요하다면 `len`을 고치는 겁니다. 
+이 방법이라면, 만약 모든 것이 평소처럼 동작한다면 우리는 최소의 비용으로 원하는 동작을 얻어냅니다. 하지만 만약 누군가가 반복 중간에 `mem::forget`을 사용할 *대담함이* 있다면, 그것이 초래하는 결과는 *더한 누설입니다* 
+(그리고 `Vec`을 예상 밖이지만 그것만 빼면 안정적인 상태로 만듭니다). 우리는 `mem::forget`을 안전하다고 받아들였으므로, 이것은 명확하게 안전합니다. 우리는 이렇게 누설이 더한 누설을 부르는 것을 *누설 증폭이라고* 부릅니다.
 
 ## Rc
 
