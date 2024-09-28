@@ -1,5 +1,5 @@
 name: CI
-on: [pull_request, merge_group, merge]
+on: [pull_request, merge_group, push]
 
 env:
   MDBOOK_VERSION: 0.4.40
