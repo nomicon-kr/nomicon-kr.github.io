@@ -1,24 +1,17 @@
-# 누설
+# 누설 (漏泄)
 
-Ownership-based resource management is intended to simplify composition. You
-acquire resources when you create the object, and you release the resources when
-it gets destroyed. Since destruction is handled for you, it means you can't
-forget to release the resources, and it happens as soon as possible! Surely this
-is perfect and all of our problems are solved.
+소유권 기반 자원 관리는 합성을 쉽게 하기 위한 것입니다. 객체를 만들 때 자원을 획득하고, 객체가 소멸될 때 자원을 반납합니다. 
+소멸이 자동으로 처리되므로, 여러분이 자원을 반납하는 것을 까먹는 일이 없다는 뜻이고, 또한 최대한 빨리 반납이 이루어진다는 것입니다! 분명 이건 완벽하고 우리의 모든 문제는 해결된 것입니다.
 
-Everything is terrible and we have new and exotic problems to try to solve.
+모든 것은 끔찍하고 우리는 이제 새롭고 괴이한 문제들을 마주해야 합니다.
 
-Many people like to believe that Rust eliminates resource leaks. In practice,
-this is basically true. You would be surprised to see a Safe Rust program
-leak resources in an uncontrolled way.
+많은 사람들이 러스트가 자원 누설을 제거한다고 믿고 싶어합니다. 현실적으로, 이것은 맞는 말입니다. 안전한 러스트 프로그램이 통제되지 않는 방법으로 자원을 누설한다면 아마 놀랄 겁니다.
 
-However from a theoretical perspective this is absolutely not the case, no
-matter how you look at it. In the strictest sense, "leaking" is so abstract as
-to be unpreventable. It's quite trivial to initialize a collection at the start
-of a program, fill it with tons of objects with destructors, and then enter an
-infinite event loop that never refers to it. The collection will sit around
-uselessly, holding on to its precious resources until the program terminates (at
-which point all those resources would have been reclaimed by the OS anyway).
+하지만 이론적인 측면에서 보자면 전혀 사실이 아니며, 이것은 어떻게 보든 상관없습니다. 엄밀하게 보자면, "누설"이라는 것은 너무나도 모호해서 방지할 수가 없습니다. 
+어떤 컬렉션을 프로그램의 시작 때에 초기화하고, 소멸자가 있는 객체들 덩어리로 채우고, 그것을 전혀 사용하지 않는 무한 이벤트 반복문에 들어가는 것은 꽤나 흔한 일입니다. 
+그 컬렉션은 쓸모 없이 앉아서 시간이나 때우겠죠, 프로그램이 종료될 때까지 귀중한 자원을 쥐고서요 (그 때에는 어차피 운영체제가 그 모든 자원들을 회수할 테니까요).
+
+
 
 We may consider a more restricted form of leak: failing to drop a value that is
 unreachable. Rust also doesn't prevent this. In fact Rust *has a function for
