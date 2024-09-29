@@ -70,16 +70,12 @@ println!("{}", vec[0]);
 
 ## Rc
 
-Rc is an interesting case because at first glance it doesn't appear to be a
-proxy value at all. After all, it manages the data it points to, and dropping
-all the Rcs for a value will drop that value. Leaking an Rc doesn't seem like it
-would be particularly dangerous. It will leave the refcount permanently
-incremented and prevent the data from being freed or dropped, but that seems
-just like Box, right?
+`Rc`는 흥미로운 경우인데, 처음 볼 때는 이것이 대리 타입이라고는 전혀 생각되지 않기 때문입니다. 어쨌든 이것은 가리키는 데이터를 관리하고, 모든 그 값의 `Rc`를 모두 해제하면 그 값이 해제될 것이기 때문입니다. 
+`Rc`를 누설하는 것이 그렇게 위험할 것 같지는 않은데요. 참조 횟수를 영원히 증가시킨 상태로 방치할 것이고 데이터가 해제되는 것을 막겠지만, 그건 `Box`의 경우와 같잖아요, 그렇죠?
 
-Nope.
+땡, 틀렸습니다.
 
-Let's consider a simplified implementation of Rc:
+`Rc`의 간단한 구현을 생각해 볼까요:
 
 <!-- ignore: simplified code -->
 ```rust,ignore
