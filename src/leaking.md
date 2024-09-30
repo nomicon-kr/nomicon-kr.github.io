@@ -123,16 +123,13 @@ impl<T> Drop for Rc<T> {
 }
 ```
 
-This code contains an implicit and subtle assumption: `ref_count` can fit in a
-`usize`, because there can't be more than `usize::MAX` Rcs in memory. However
-this itself assumes that the `ref_count` accurately reflects the number of Rcs
-in memory, which we know is false with `mem::forget`. Using `mem::forget` we can
-overflow the `ref_count`, and then get it down to 0 with outstanding Rcs. Then
-we can happily use-after-free the inner data. Bad Bad Not Good.
+이 코드는 암묵적이고 잘 보이지 않는 가정을 포함하고 있습니다: `usize::MAX`보다 많은 양의 `Rc`가 메모리에 있을 수 없기 때문에, `ref_count`가 `usize` 안에 들어갈 거라는 겁니다. 
+하지만 이 자체도 또한 `ref_count`가 메모리에 있는 `Rc`들의 갯수를 정확히 반영한다는 가정을 하고 있는데, 우리는 `mem::forget`의 존재 때문에 이것이 거짓이라는 것을 압니다. 
+`mem::forget`을 사용하면 `ref_count`를 오버플로우할 수 있고, 그 다음 `Rc`들을 해제하면 `ref_count`는 0이 되지만 메모리에는 엄청난 양의 `Rc`가 있게 됩니다. 
+그럼 우리는 행복하게 `Rc` 안의 데이터를 해제 후 사용하게 됩니다. 젠장, 좋지 않군요.
 
-This can be solved by just checking the `ref_count` and doing *something*. The
-standard library's stance is to just abort, because your program has become
-horribly degenerate. Also *oh my gosh* it's such a ridiculous corner case.
+이 문제는 `ref_count`를 검사하고 *무언가를* 하는 것으로 해결할 수 있습니다. 표준 라이브러리의 방식은 그냥 강제종료하는 것인데, 그 프로그램이 끔찍하게 타락했기 때문입니다. 
+그리고 *맙소사* 이건 정말 우스꽝스러운 특수 경우이군요.
 
 ## thread::scoped::JoinGuard
 
