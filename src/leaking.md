@@ -144,7 +144,7 @@ pub fn scoped<'a, F>(f: F) -> JoinGuard<'a>
     where F: FnOnce() + Send + 'a
 ```
 
-여기서 `f`는 스레드가 실행할 클로저입니다. `F: Send + 'a`라고 하는 것은 `'a`만큼 사는 `data`를 참조한다는 뜻이고, 
+여기서 `f`는 스레드가 실행할 함수입니다. `F: Send + 'a`라고 하는 것은 `'a`만큼 사는 `data`를 참조한다는 뜻이고, 
 그 `data`를 가지고 있거나 아니면 `data`가 `Sync`라는 말입니다 (이 말은 곧 `&data`는 `Send`라는 말을 함축합니다).
 
 `JoinGuard`가 수명을 가지므로, `JoinGuard`는 모체에서 빌려온 모든 데이터를 보관합니다. 이 말은 `JoinGuard`는 모체의 데이터보다 오래 살 수 없다는 말입니다. 
@@ -158,44 +158,38 @@ let mut data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 {
     let mut guards = vec![];
     for x in &mut data {
-        // Move the mutable reference into the closure, and execute
-        // it on a different thread. The closure has a lifetime bound
-        // by the lifetime of the mutable reference `x` we store in it.
-        // The guard that is returned is in turn assigned the lifetime
-        // of the closure, so it also mutably borrows `data` as `x` did.
-        // This means we cannot access `data` until the guard goes away.
+        // 가변 레퍼런스를 함수 안으로 이동시키고, 다른 스레드에서 실행시킵니다.
+        // 함수의 수명은 그 안에 저장된 가변 레퍼런스 `x`의 수명에 제한됩니다.
+        // 그 결과로 반환되는 `JoinGuard`는 함수의 수명을 할당받으므로,
+        // `JoinGuard`도 `x`처럼 `data`를 가변으로 빌립니다.
+        // 즉 우리는 `JoinGuard`가 해제될 때까지 `data`를 접근할 수 없습니다.
         let guard = thread::scoped(move || {
             *x *= 2;
         });
-        // store the thread's guard for later
+        // 나중을 위해 `JoinGuard`를 저장합니다
         guards.push(guard);
     }
-    // All guards are dropped here, forcing the threads to join
-    // (this thread blocks here until the others terminate).
-    // Once the threads join, the borrow expires and the data becomes
-    // accessible again in this thread.
+    // 모든 `JoinGuard`는 해제되는데, 스레드들이 실행을 끝마치고 모체에 합류하도록 강제합니다
+    // (이 스레드, 즉 모체는 다른 스레드들이 종료할 때까지 대기합니다).
+    // 스레드들이 합류하고 나면, 대여가 만기되고 `data`는 모체에서 다시 접근할 수 있게 됩니다.
 }
-// data is definitely mutated here.
+// `data`는 여기서 변경됩니다.
 ```
 
-In principle, this totally works! Rust's ownership system perfectly ensures it!
-...except it relies on a destructor being called to be safe.
+원칙적으로는 이 코드는 잘 동작합니다! 러스트의 소유권 시스템은 이것의 안전성을 완벽하게 보장합니다! ...안전하려면 소멸자가 꼭 실행되어야 한다는 사실만 빼면요.
 
 <!-- ignore: simplified code -->
 ```rust,ignore
 let mut data = Box::new(0);
 {
     let guard = thread::scoped(|| {
-        // This is at best a data race. At worst, it's also a use-after-free.
+        // 이것은 최선의 경우 데이터 경합입니다. 최악의 경우, 역시 해제 후 사용이고요.
         *data += 1;
     });
-    // Because the guard is forgotten, expiring the loan without blocking this
-    // thread.
+    // `JoinGuard`가 잊혀졌기 때문에, 모체에서 대기되어야 하는 스레드를 자유롭게 풀어버립니다.
     mem::forget(guard);
 }
-// So the Box is dropped here while the scoped thread may or may not be trying
-// to access it.
+// 따라서 `Box`는 여기서 해제되지만 생성된 스레드는 이 `Box`를 접근하려 시도할지도 모릅니다.
 ```
 
-Dang. Here the destructor running was pretty fundamental to the API, and it had
-to be scrapped in favor of a completely different design.
+이런. 여기서 소멸자의 실행은 API에 있어서 무척 근본이 되었기 때문에, API는 완전히 다른 디자인으로 바뀌어야 했습니다.
