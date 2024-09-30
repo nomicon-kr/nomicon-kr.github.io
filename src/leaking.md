@@ -91,7 +91,7 @@ struct RcBox<T> {
 impl<T> Rc<T> {
     fn new(data: T) -> Self {
         unsafe {
-            // Wouldn't it be nice if heap::allocate worked like this?
+            // heap::allocate가 이렇게 작동한다면 정말 좋지 않을까요?
             let ptr = heap::allocate::<RcBox<T>>();
             ptr::write(ptr, RcBox {
                 data,
@@ -114,7 +114,7 @@ impl<T> Drop for Rc<T> {
         unsafe {
             (*self.ptr).ref_count -= 1;
             if (*self.ptr).ref_count == 0 {
-                // drop the data and then free it
+                // 데이터를 해제합니다
                 ptr::read(self.ptr);
                 heap::deallocate(self.ptr);
             }
@@ -133,16 +133,10 @@ impl<T> Drop for Rc<T> {
 
 ## thread::scoped::JoinGuard
 
-> Note: This API has already been removed from std, for more information
-> you may refer [issue #24292](https://github.com/rust-lang/rust/issues/24292).
->
-> This section remains here because we think this example is still
-> important, regardless of whether it is part of std or not.
+> 주의: 이 API는 표준 라이브러리에서 이미 삭제되었습니다. 더 자세한 내용은 [issue #24292를](https://github.com/rust-lang/rust/issues/24292) 참고하세요.
+> 이 섹션이 여기 남아 있는 이유는 이것이 표준 라이브러리의 일부분이든 아니든, 이 예제가 여전히 중요하다고 여기기 때문입니다.
 
-The thread::scoped API intended to allow threads to be spawned that reference
-data on their parent's stack without any synchronization over that data by
-ensuring the parent joins the thread before any of the shared data goes out
-of scope.
+`thread::scoped` API는 모체의 스택에 있는 데이터를 동기화 없이 참조하는 스레드를 만들 수 있도록 설계되었는데, 이것은 공유된 데이터의 수명이 끝나기 전에 스레드가 모체로 돌아가는 것을 보장하기 때문에 가능합니다.
 
 <!-- ignore: simplified code -->
 ```rust,ignore
@@ -150,17 +144,13 @@ pub fn scoped<'a, F>(f: F) -> JoinGuard<'a>
     where F: FnOnce() + Send + 'a
 ```
 
-Here `f` is some closure for the other thread to execute. Saying that
-`F: Send + 'a` is saying that it closes over data that lives for `'a`, and it
-either owns that data or the data was Sync (implying `&data` is Send).
+여기서 `f`는 스레드가 실행할 클로저입니다. `F: Send + 'a`라고 하는 것은 `'a`만큼 사는 `data`를 참조한다는 뜻이고, 
+그 `data`를 가지고 있거나 아니면 `data`가 `Sync`라는 말입니다 (이 말은 곧 `&data`는 `Send`라는 말을 함축합니다).
 
-Because JoinGuard has a lifetime, it keeps all the data it closes over
-borrowed in the parent thread. This means the JoinGuard can't outlive
-the data that the other thread is working on. When the JoinGuard *does* get
-dropped it blocks the parent thread, ensuring the child terminates before any
-of the closed-over data goes out of scope in the parent.
+`JoinGuard`가 수명을 가지므로, `JoinGuard`는 모체에서 빌려온 모든 데이터를 보관합니다. 이 말은 `JoinGuard`는 모체의 데이터보다 오래 살 수 없다는 말입니다. 
+`JoinGuard`가 해제가 *될 때* 모체를 대기시키는데, 빌려온 데이터가 모체의 범위를 벗어나기 전에 스레드가 종료하는 것을 보장합니다.
 
-Usage looked like:
+사용 방법은 이와 같았습니다:
 
 <!-- ignore: simplified code -->
 ```rust,ignore
