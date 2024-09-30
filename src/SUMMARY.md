@@ -35,7 +35,7 @@
   * [생성자](constructors.md)
   * [소멸자](destructors.md)
   * [누설](leaking.md)
-* [Unwinding](unwinding.md)
+* [되감기](unwinding.md)
   * [Exception Safety](exception-safety.md)
   * [Poisoning](poisoning.md)
 * [Concurrency](concurrency.md)
