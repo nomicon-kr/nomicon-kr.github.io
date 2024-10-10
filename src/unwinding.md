@@ -24,14 +24,8 @@ Erlang처럼 러스트는 경량 작업들이 있었고, 작업들은 적합하�
 좀더 자세하게 말하자면, 현재 러스트의 되감기 구현은 "되감지 않는" 경우를 위해 매우 최적화되어 있습니다. 프로그램이 되감지 않는다면, 되감기를 *준비한* 프로그램이라도 실행 시의 비용은 없을 겁니다. 
 결과적으로, Java 같은 언어보다는 되감기 작업이 비용이 많이 들게 됩니다. 보통의 상황에서는 여러분의 프로그램을 되감도록 만들지 마세요. 이상적으로는, 프로그래밍 오류나 *심각한* 문제들에만 `panic!`해야 합니다.
 
-
-
-Rust's unwinding strategy is not specified to be fundamentally compatible
-with any other language's unwinding. As such, unwinding into Rust from another
-language, or unwinding into another language from Rust is Undefined Behavior.
-You must *absolutely* catch any panics at the FFI boundary! What you do at that
-point is up to you, but *something* must be done. If you fail to do this,
-at best, your application will crash and burn. At worst, your application *won't*
-crash and burn, and will proceed with completely clobbered state.
+러스트의 되감기 전략은 다른 언어들의 되감기 작업과 근본적으로 호환될 만큼 특정되지 않았습니다. 따라서 다른 언어에서 러스트로 되감거나, 혹은 러스트에서 다른 언어로 되감는 작업은 **미정의 동작입니다**. 
+여러분은 FFI 경계에서의 모든 `panic!`들을 *완전히* 잡아내야 합니다! 그 시점에서 무엇을 할지는 여러분에게 달려 있지만, *무언가는* 해야 될 겁니다. 만약 이것을 하지 못한다면, 최선의 경우 여러분의 프로그램은 박살나고 불탈 겁니다. 
+최악의 경우 여러분의 프로그램은 박살나거나 불타지 *않고*, 완전히 망가진 상태로 여전히 실행할 겁니다.
 
 [`catch_unwind`]: https://doc.rust-lang.org/std/panic/fn.catch_unwind.html
