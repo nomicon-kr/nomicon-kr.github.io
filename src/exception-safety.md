@@ -1,28 +1,19 @@
-# Exception Safety
+# 예외 안전성
 
-Although programs should use unwinding sparingly, there's a lot of code that
-*can* panic. If you unwrap a None, index out of bounds, or divide by 0, your
-program will panic. On debug builds, every arithmetic operation can panic
-if it overflows. Unless you are very careful and tightly control what code runs,
-pretty much everything can unwind, and you need to be ready for it.
+프로그램이 되감기를 주의해서 사용해야 하긴 하지만, `panic!`할 수 있는 코드는 많이 있습니다. `None`을 `unwrap`하거나, 범위 밖으로 인덱스를 접근하거나, 0으로 나누면 프로그램은 `panic!`할 겁니다. 
+디버그 빌드에서는, 모든 수치 연산은 만약 오버플로우된다면 `panic!`합니다. 여러분이 어떤 코드가 실행되는지 매우 주의 깊게, 엄격하게 제어하지 못한다면 거의 모든 것들이 되감기를 할 수 있고, 여러분은 그것에 대비해야 합니다.
 
-Being ready for unwinding is often referred to as *exception safety*
-in the broader programming world. In Rust, there are two levels of exception
-safety that one may concern themselves with:
+되감기에 대비하는 것은 넓은 프로그래밍 분야에서 보통 *예외 안전성이라고* 부릅니다. 러스트에서는 고려해야 하는 예외 안전성에 두 가지 단계가 있습니다:
 
-* In unsafe code, we *must* be exception safe to the point of not violating
-  memory safety. We'll call this *minimal* exception safety.
+* 불안전한 코드에서, 우리는 메모리 안전성을 깨지 않는 수준까지 예외에 안전해야 *합니다*. 이것을 *최소* 예외 안전성이라 부르겠습니다.
 
-* In safe code, it is *good* to be exception safe to the point of your program
-  doing the right thing. We'll call this *maximal* exception safety.
+* 안전한 코드에서, 여러분의 프로그램이 올바른 일을 하는 수준까지 예외에 안전한 것이 *좋습니다*. 이것을 우리는 *최대* 예외 안전성이라고 하겠습니다.
 
-As is the case in many places in Rust, Unsafe code must be ready to deal with
-bad Safe code when it comes to unwinding. Code that transiently creates
-unsound states must be careful that a panic does not cause that state to be
-used. Generally this means ensuring that only non-panicking code is run while
-these states exist, or making a guard that cleans up the state in the case of
-a panic. This does not necessarily mean that the state a panic witnesses is a
-fully coherent state. We need only guarantee that it's a *safe* state.
+러스트의 많은 부분에서 그렇듯이, 되감기에 있어서도 불안전한 코드는 나쁜 안전한 코드를 감당할 준비를 해야 합니다. 잠시 불건전한 상태를 만드는 코드는 `panic!`이 일어났을 때 그 상태가 사용되지 않도록 유의해야 합니다. 
+보통 "유의한다"는 것은 이런 상태들이 존재하는 동안에는 `panic!`하지 않는 코드만 실행하도록 하거나, `panic!`이 발생할 경우 그 상태를 청소하는 안전 장치를 만드는 것입니다. 
+`panic!`이 일어났을 때 항상 일관적인 상태가 아니어도 됩니다. 우리는 다만 그것이 *안전한* 상태임을 보장해야 합니다.
+
+
 
 Most Unsafe code is leaf-like, and therefore fairly easy to make exception-safe.
 It controls all the code that runs, and most of that code can't panic. However
