@@ -36,7 +36,7 @@
   * [소멸자](destructors.md)
   * [누설](leaking.md)
 * [되감기](unwinding.md)
-  * [Exception Safety](exception-safety.md)
+  * [예외 내구성](exception-safety.md)
   * [Poisoning](poisoning.md)
 * [Concurrency](concurrency.md)
   * [Races](races.md)
