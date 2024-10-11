@@ -37,23 +37,16 @@ impl<T: Clone> Vec<T> {
 }
 ```
 
-우리는 분명히 `Vec`이 차지할 공간을 알고 있으므로 반복되는 공간과 `len` 검사를 피하기 위해 `push`를 피해서 지나칩니다. 이 논리는 완전히 올바릅니다, 다만 
+우리는 분명히 `Vec`이 차지할 공간을 알고 있으므로 반복되는 공간과 `len` 검사를 피하기 위해 `push`를 피해서 지나칩니다. 이 논리는 완전히 올바릅니다, 다만 물 아래 빙산 같은 한 가지 문제가 있죠: 이 코드가 예외에 안전하지 않다는 겁니다! 
+`set_len`, `add` 그리고 `write`는 모두 괜찮습니다. `clone`이 바로 우리가 지나쳤던 `panic!` 시한폭탄입니다.
 
-We bypass `push` in order to avoid redundant capacity and `len` checks on the
-Vec that we definitely know has capacity. The logic is totally correct, except
-there's a subtle problem with our code: it's not exception-safe! `set_len`,
-`add`, and `write` are all fine; `clone` is the panic bomb we over-looked.
+`Clone`은 우리의 제어를 완벽히 벗어나고, `panic!`할 자유가 차고 넘칩니다. 만약 `panic!`한다면, 우리의 함수는 `Vec`의 길이를 너무 크게 설정한 채로 일찍 종료하게 될 겁니다. 
+만약 이 `Vec`을 누군가 보거나 해제하려 한다면, 미초기화된 메모리를 읽게 될 겁니다!
 
-Clone is completely out of our control, and is totally free to panic. If it
-does, our function will exit early with the length of the Vec set too large. If
-the Vec is looked at or dropped, uninitialized memory will be read!
+이 경우에 해결책은 꽤나 단순합니다. 만약 우리가 `clone`한 값들만 해제되는 것을 보장하길 원한다면, 반복문을 도는 매번 `len`을 설정하면 됩니다. 
+만약 우리가 미초기화된 메모리가 관측되지 않기를 바란다면, 반복문이 끝난 후 `len`을 설정하면 됩니다.
 
-The fix in this case is fairly simple. If we want to guarantee that the values
-we *did* clone are dropped, we can set the `len` every loop iteration. If we
-just want to guarantee that uninitialized memory can't be observed, we can set
-the `len` after the loop.
-
-## BinaryHeap::sift_up
+## `BinaryHeap::sift_up`
 
 Bubbling an element up a heap is a bit more complicated than extending a Vec.
 The pseudocode is as follows:
