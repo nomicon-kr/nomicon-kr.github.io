@@ -57,7 +57,7 @@ bubble_up(heap, index):
         index = parent(index)
 ```
 
-이 의사 코드를 그대로 러스트로 옮긴다면 대체로 괜찮지만, 좀 거슬리게 성능을 방해하는 것이 있습니다: `self` 원소가 의미 없이 계속 바뀌는군요. 우리는 대신 이와 같이 할 것입니다:
+이 의사 코드를 그대로 러스트로 옮긴다면 대체로 괜찮지만, 좀 거슬리게 성능을 방해하는 것이 있습니다: `heap[index]` 원소가 의미 없이 계속 바뀌는군요. 우리는 대신 이와 같이 할 것입니다:
 
 ```text
 bubble_up(heap, index):
@@ -68,15 +68,10 @@ bubble_up(heap, index):
     heap[index] = elem
 ```
 
-This code ensures that each element is copied as little as possible (it is in
-fact necessary that elem be copied twice in general). However it now exposes
-some exception safety trouble! At all times, there exists two copies of one
-value. If we panic in this function something will be double-dropped.
-Unfortunately, we also don't have full control of the code: that comparison is
-user-defined!
+이 코드는 이제 각 원소가 최소한으로 복사된다는 것을 보장합니다 (사실 보통은 원소들이 두 번씩 복사되는 것이 필수적입니다). 하지만 이 프로그램은 이제 예외 안전성 문제가 좀 생겼습니다! 모든 순간, 어떤 값의 복사가 두 개씩 존재합니다. 
+만약 이 함수에서 `panic!`한다면 무언가는 두 번 해제될 겁니다. 게다가 불행하게도, 우리는 이 코드의 완전한 제어권을ㄹ 가지고 있지도 않습니다: 비교 연산은 사용자가 정의하거든요!
 
-Unlike Vec, the fix isn't as easy here. One option is to break the user-defined
-code and the unsafe code into two separate phases:
+`Vec`과 달리 여기서는 해결법이 쉽지는 않습니다. 한 가지 방법은 사용자가 정의한 코드와 불안전한 코드를 두 개의 분리된 단계로 나누는 것입니다:
 
 ```text
 bubble_up(heap, index):
