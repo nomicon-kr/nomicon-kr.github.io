@@ -26,7 +26,7 @@ impl<T: Clone> Vec<T> {
     fn push_all(&mut self, to_push: &[T]) {
         self.reserve(to_push.len());
         unsafe {
-            // can't overflow because we just reserved this
+            // 방금 이만큼 할당했기 때문에 오버플로우되지 않을 겁니다
             self.set_len(self.len() + to_push.len());
 
             for (i, x) in to_push.iter().enumerate() {
@@ -36,6 +36,8 @@ impl<T: Clone> Vec<T> {
     }
 }
 ```
+
+우리는 분명히 `Vec`이 차지할 공간을 알고 있으므로 반복되는 공간과 `len` 검사를 피하기 위해 `push`를 피해서 지나칩니다. 이 논리는 완전히 올바릅니다, 다만 
 
 We bypass `push` in order to avoid redundant capacity and `len` checks on the
 Vec that we definitely know has capacity. The logic is totally correct, except
