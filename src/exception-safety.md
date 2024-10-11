@@ -48,8 +48,7 @@ impl<T: Clone> Vec<T> {
 
 ## `BinaryHeap::sift_up`
 
-Bubbling an element up a heap is a bit more complicated than extending a Vec.
-The pseudocode is as follows:
+힙에서 원소를 밀어 올리는 것은 `Vec`을 확장하는 것보다 조금 더 복잡합니다. 의사 코드는 다음과 같습니다:
 
 ```text
 bubble_up(heap, index):
@@ -58,9 +57,7 @@ bubble_up(heap, index):
         index = parent(index)
 ```
 
-A literal transcription of this code to Rust is totally fine, but has an annoying
-performance characteristic: the `self` element is swapped over and over again
-uselessly. We would rather have the following:
+이 의사 코드를 그대로 러스트로 옮긴다면 대체로 괜찮지만, 좀 거슬리게 성능을 방해하는 것이 있습니다: `self` 원소가 의미 없이 계속 바뀌는군요. 우리는 대신 이와 같이 할 것입니다:
 
 ```text
 bubble_up(heap, index):
