@@ -13,18 +13,12 @@
 보통 "유의한다"는 것은 이런 상태들이 존재하는 동안에는 `panic!`하지 않는 코드만 실행하도록 하거나, `panic!`이 발생할 경우 그 상태를 청소하는 안전 장치를 만드는 것입니다. 
 `panic!`이 일어났을 때 항상 일관적인 상태가 아니어도 됩니다. 우리는 다만 그것이 *안전한* 상태임을 보장해야 합니다.
 
+대부분의 불안전한 코드는 다른 코드에 연결되어 있지 않아서, 예외에 대해 안전하게 만들기 적당히 쉽습니다. 실행되는 모든 코드를 제어하고, 그 대부분은 `panic!`할 수 없죠. 
+하지만 불안전한 코드에서 호출자가 제공한 코드를 반복적으로 실행하며, 일시적으로 미초기화된 데이터의 배열을 가지고 작업하는 것은 희귀한 것은 아닙니다. 이런 코드는 예외 안전성을 고려해서 주의해야 합니다.
 
+## `Vec::push_all`
 
-Most Unsafe code is leaf-like, and therefore fairly easy to make exception-safe.
-It controls all the code that runs, and most of that code can't panic. However
-it is not uncommon for Unsafe code to work with arrays of temporarily
-uninitialized data while repeatedly invoking caller-provided code. Such code
-needs to be careful and consider exception safety.
-
-## Vec::push_all
-
-`Vec::push_all` is a temporary hack to get extending a Vec by a slice reliably
-efficient without specialization. Here's a simple implementation:
+`Vec::push_all`은 어떤 슬라이스만큼 `Vec`을 확장하되 특정화 없이 비교적 효율적으로 하기 위한 임시방편입니다. 여기 간단한 구현이 있습니다:
 
 <!-- ignore: simplified code -->
 ```rust,ignore
