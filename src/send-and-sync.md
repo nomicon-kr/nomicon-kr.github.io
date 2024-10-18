@@ -1,4 +1,4 @@
-# Send and Sync
+# Send와 Sync
 
 Not everything obeys inherited mutability, though. Some types allow you to
 have multiple aliases of a location in memory while mutating it. Unless these types use
