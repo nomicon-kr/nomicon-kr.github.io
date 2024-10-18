@@ -10,18 +10,9 @@
 이것의 가장 주목할 만한 예는 표준 라이브러리의 `Mutex` 타입입니다. `Mutex`는 그 `MutexGuard`들 (락을 얻었을 때 `Mutex`가 반환하는 것) 중 하나가 `panic!` 중에 해제될 때, 그 자신을 오염시킵니다. 
 이 이후의 `Mutex`를 잠그려는 어떤 시도도 `Err`를 반환하거나 `panic!`할 겁니다.
 
+`Mutex`가 오염되는 것은 러스트가 보통 신경쓰는 정도의 안정성을 위해서가 아닙니다. 그것은 잠겨 있는 도중 `panic!`을 마주한 `Mutex`에서 나온 데이터를 멋모르고 사용하는 것에 대한 안전 장치입니다. 
+이런 `Mutex`에 있는 데이터는 아마도 수정되던 도중이었을 것이며, 따라서 모순되거나 불완전한 상태에 있을 수 있기 때문입니다. 코드가 잘 쓰여졌다면 이런 타입을 사용하는 것이 메모리 안전성을 침해할 수 없다는 것이 중요합니다. 
+결국 최소한은 예외에 안전해야 하니까요!
 
-
-Mutex poisons not for true safety in the sense that Rust normally cares about. It
-poisons as a safety-guard against blindly using the data that comes out of a Mutex
-that has witnessed a panic while locked. The data in such a Mutex was likely in the
-middle of being modified, and as such may be in an inconsistent or incomplete state.
-It is important to note that one cannot violate memory safety with such a type
-if it is correctly written. After all, it must be minimally exception-safe!
-
-However if the Mutex contained, say, a BinaryHeap that does not actually have the
-heap property, it's unlikely that any code that uses it will do
-what the author intended. As such, the program should not proceed normally.
-Still, if you're double-plus-sure that you can do *something* with the value,
-the Mutex exposes a method to get the lock anyway. It *is* safe, after all.
-Just maybe nonsense.
+하지만 `Mutex`가, 이를테면, 제대로 배열되지 않은 `BinaryHeap`을 포함하고 있다면, 이것을 사용하는 어떤 코드도 코드의 작성자가 의도한 것을 하지는 못할 겁니다. 그렇기 때문에 프로그램은 정상적으로 진행되어서는 안됩니다. 
+그래도, 만약 그 값을 가지고 *무언가를* 할 수 있다고 여러분이 확신한다면, `Mutex`는 어쨌든 락을 얻을 수 있도록 하는 메서드를 제공합니다. *안전하기* 때문이죠. 다만 말이 안 될 수도 있을 뿐이죠.
