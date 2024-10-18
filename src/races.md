@@ -26,33 +26,29 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 
 let data = vec![1, 2, 3, 4];
-// Arc so that the memory the AtomicUsize is stored in still exists for
-// the other thread to increment, even if we completely finish executing
-// before it. Rust won't compile the program without it, because of the
-// lifetime requirements of thread::spawn!
+// 우리가 실행을 마치고 나서라도 다른 스레드에서 AtomicUsize가 저장되어 있는 메모리를
+// 증가시킬 수 있도록 Arc를 사용합니다. Arc가 없으면 러스트는 프로그램 컴파일을 거부할 겁니다,
+// thread::spawn의 수명 요구사항 때문이죠!
 let idx = Arc::new(AtomicUsize::new(0));
 let other_idx = idx.clone();
 
-// `move` captures other_idx by-value, moving it into this thread
+// `move`는 other_idx를 값으로 흡수합니다, 이 스레드로 옮기면서 말이죠
 thread::spawn(move || {
-    // It's ok to mutate idx because this value
-    // is an atomic, so it can't cause a Data Race.
+    // idx를 변경해도 됩니다, 이 값은 원자값이므로
+    // 변경해도 데이터 경합을 초래할 수 없습니다.
     other_idx.fetch_add(10, Ordering::SeqCst);
 });
 
-// Index with the value loaded from the atomic. This is safe because we
-// read the atomic memory only once, and then pass a copy of that value
-// to the Vec's indexing implementation. This indexing will be correctly
-// bounds checked, and there's no chance of the value getting changed
-// in the middle. However our program may panic if the thread we spawned
-// managed to increment before this ran. A race condition because correct
-// program execution (panicking is rarely correct) depends on order of
-// thread execution.
+// 원자값에서 가져온 값으로 인덱싱합니다. 이것이 안전한 이유는 우리가 원자값 메모리를 단 한 번만
+// 읽고, 그 복사값을 Vec의 인덱싱 구현에 넘겨주기 때문입니다. 이 인덱싱은 똑바로 경계가 검사될
+// 것이고, 중간에 값이 변경될 가능성은 없습니다. 하지만 우리의 프로그램은 이것이 실행되기 전에
+// 우리가 생성한 스레드가 이 값을 증가시켰다면 panic!할 수 있습니다. 이것은 경합 조건인데, 올바른
+// 프로그램 실행은 (panic!하는 것은 올바른 경우가 매우 희귀합니다) 스레드 실행의 순서에 좌우되기
+// 때문입니다.
 println!("{}", data[idx.load(Ordering::SeqCst)]);
 ```
 
-We can cause a data race if we instead do the bound check in advance, and then
-unsafely access the data with an unchecked value:
+이 코드 대신 우리가 경계 검사를 직접 하고, 데이터를 검사받지 않은 값으로 불안전하게 접근하면 데이터 경합을 일으킬 수 있습니다:
 
 ```rust,no_run
 use std::thread;
@@ -64,18 +60,18 @@ let data = vec![1, 2, 3, 4];
 let idx = Arc::new(AtomicUsize::new(0));
 let other_idx = idx.clone();
 
-// `move` captures other_idx by-value, moving it into this thread
+// `move`는 other_idx를 값으로 흡수합니다, 이 스레드로 옮기면서 말이죠
 thread::spawn(move || {
-    // It's ok to mutate idx because this value
-    // is an atomic, so it can't cause a Data Race.
+    // idx를 변경해도 됩니다, 이 값은 원자값이므로
+    // 변경해도 데이터 경합을 초래할 수 없습니다.
     other_idx.fetch_add(10, Ordering::SeqCst);
 });
 
 if idx.load(Ordering::SeqCst) < data.len() {
     unsafe {
-        // Incorrectly loading the idx after we did the bounds check.
-        // It could have changed. This is a race condition, *and dangerous*
-        // because we decided to do `get_unchecked`, which is `unsafe`.
+        // 경계 검사를 한 후에 idx를 올바르지 않게 가져옵니다. idx는 변했을 수도 있습니다.
+        // 이것은 경합 조건이고, *위험한데*, 그 이유는 우리가 `unsafe`한 `get_unchecked`를
+        // 하기로 결정했기 때문입니다.
         println!("{}", data.get_unchecked(idx.load(Ordering::SeqCst)));
     }
 }
