@@ -113,7 +113,7 @@ bubble_up(heap, index):
 ```rust,ignore
 struct Hole<'a, T: 'a> {
     data: &'a mut [T],
-    /// `elt` is always `Some` from new until drop.
+    /// `elt`는 `new`에서부터 `drop`까지 항상 `Some`입니다.
     elt: Option<T>,
     pos: usize,
 }
@@ -146,7 +146,7 @@ impl<'a, T> Hole<'a, T> {
 
 impl<'a, T> Drop for Hole<'a, T> {
     fn drop(&mut self) {
-        // fill the hole again
+        // 구멍을 다시 채웁니다
         unsafe {
             let pos = self.pos;
             ptr::write(&mut self.data[pos], self.elt.take().unwrap());
@@ -157,7 +157,7 @@ impl<'a, T> Drop for Hole<'a, T> {
 impl<T: Ord> BinaryHeap<T> {
     fn sift_up(&mut self, pos: usize) {
         unsafe {
-            // Take out the value at `pos` and create a hole.
+            // `pos`에 있는 값을 떼어내고 구멍을 만듭니다.
             let mut hole = Hole::new(&mut self.data, pos);
 
             while hole.pos() != 0 {
@@ -165,7 +165,7 @@ impl<T: Ord> BinaryHeap<T> {
                 if hole.removed() <= hole.get(parent) { break }
                 hole.move_to(parent);
             }
-            // Hole will be unconditionally filled here; panic or not!
+            // 구멍은 무조건 여기서 다시 채워질 겁니다: panic! 하든 하지 않든요!
         }
     }
 }
