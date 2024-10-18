@@ -86,16 +86,11 @@ bubble_up(heap, index):
     heap[index] = elem
 ```
 
-If the user-defined code blows up, that's no problem anymore, because we haven't
-actually touched the state of the heap yet. Once we do start messing with the
-heap, we're working with only data and functions that we trust, so there's no
-concern of panics.
+만약 사용자가 정의한 코드가 터진다면 더 이상 문제가 아니게 됩니다, 우리는 아직 힙의 상태를 건드리지 않았거든요. 우리가 힙을 가지고 놀기 시작할 때에는 우리가 신뢰하는 데이터와 함수들만 가지고 작업하고, 따라서 `panic!`할 염려는 없습니다.
 
-Perhaps you're not happy with this design. Surely it's cheating! And we have
-to do the complex heap traversal *twice*! Alright, let's bite the bullet. Let's
-intermix untrusted and unsafe code *for reals*.
+혹시 여러분은 이런 디자인이 맘에 들지 않을 수도 있습니다. 확실히 이건 속임수입니다! 또 우리는 복잡한 힙 순회를 *두 번이나* 해야 합니다! 좋아요, 힘든 쪽으로 가 봅시다. *진짜로* 신뢰할 수 없는 코드와 불안전한 코드를 섞어 보자구요.
 
-If Rust had `try` and `finally` like in Java, we could do the following:
+만약 러스트에 자바에서처럼 `try`와 `finally`가 있었다면, 우리는 이렇게 할 수도 있겠지요:
 
 ```text
 bubble_up(heap, index):
@@ -107,6 +102,8 @@ bubble_up(heap, index):
     finally:
         heap[index] = elem
 ```
+
+기본적인 생각은 간단합니다: 만약 비교 작업이 `panic!`한다면, 
 
 The basic idea is simple: if the comparison panics, we just toss the loose
 element in the logically uninitialized index and bail out. Anyone who observes
