@@ -1,18 +1,15 @@
-# Data Races and Race Conditions
+# 데이터 경합과 경합 조건
 
-Safe Rust guarantees an absence of data races, which are defined as:
+안전한 러스트는 다음과 같이 정의된 데이터 경합이 발생하지 않는 것을 보장합니다:
 
-* two or more threads concurrently accessing a location of memory
-* one or more of them is a write
-* one or more of them is unsynchronized
+* 2개 이상의 스레드들이 메모리의 한 곳을 동시적으로 접근하고
+* 그 중 1개 이상이 쓰기 작업을 하며
+* 그 중 1개 이상이 동기화되지 않은
 
-A data race has Undefined Behavior, and is therefore impossible to perform in
-Safe Rust. Data races are *mostly* prevented through Rust's ownership system:
-it's impossible to alias a mutable reference, so it's impossible to perform a
-data race. Interior mutability makes this more complicated, which is largely why
-we have the Send and Sync traits (see the next section for more on this).
+데이터 경합은 **미정의 동작을** 유발하므로, 안전한 러스트에서는 발생할 수 없습니다. 데이터 경합은 러스트의 소유권 규칙을 통해 *대부분* 방지됩니다: 가변 레퍼런스를 복제하는 것이 불가능하므로, 데이터 경합을 일으키는 것은 불가능합니다. 
+내부 가변성은 이 문제를 더 복잡하게 만드는데, 이것이 `Send`와 `Sync` 트레잇이 있는 이유의 대부분을 차지합니다 (이것에 대해서는 다음 섹션에서 더 다룹니다).
 
-**However Rust does not prevent general race conditions.**
+**하지만 안전한 러스트는 일반적인 경합 조건을 방지하지 않습니다.**
 
 This is mathematically impossible in situations where you do not control the
 scheduler, which is true for the normal OS environment. If you do control
