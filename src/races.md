@@ -11,20 +11,14 @@
 
 **하지만 안전한 러스트는 일반적인 경합 조건을 방지하지 않습니다.**
 
-This is mathematically impossible in situations where you do not control the
-scheduler, which is true for the normal OS environment. If you do control
-preemption, it _can be_ possible to prevent general races - this technique is
-used by frameworks such as [RTIC](https://github.com/rtic-rs/rtic). However,
-actually having control over scheduling is a very uncommon case.
+이것은 스케줄러를 통제하지 않는 이상 수학적으로 불가능한데, 보통의 운영 체제 환경은 스케줄러를 통제할 수 없습니다. 프로세스 선점을 통제한다면, 일반적인 경합을 해결할 *수 있습니다* - 
+이러한 기법은 [RTIC](https://github.com/rtic-rs/rtic)와 같은 프레임워크에서 사용합니다. 하지만, 스케줄링을 실제로 통제하는 것은 매우 희귀한 경우입니다.
 
-For this reason, it is considered "safe" for Rust to get deadlocked or do
-something nonsensical with incorrect synchronization: this is known as a general
-race condition or resource race. Obviously such a program isn't very good, but
-Rust of course cannot prevent all logic errors.
+이러한 이유 때문에, 러스트에서는 데드락에 걸리거나 올바르지 않은 동기화를 가지고 무언가 말도 안 되는 짓을 하는 것을 "안전하다"고 봅니다: 이것은 일반적인 경합 조건 혹은 자원 경합으로 알려져 있습니다. 
+당연히 이런 프로그램은 좋지 않지만, 러스트가 모든 논리 오류를 잡을 수는 없기 마련입니다.
 
-In any case, a race condition cannot violate memory safety in a Rust program on
-its own. Only in conjunction with some other unsafe code can a race condition
-actually violate memory safety. For instance, a correct program looks like this:
+어떤 경우에서건, 경합 조건은 러스트 프로그램에서 그 자체만으로는 메모리 안전성을 침해할 수 없습니다. 반드시 어떤 다른 불안전한 코드와 엮여야만 경합 조건은 실제로 메모리 안전성을 해칠 수 있게 됩니다.
+예를 들어, 올바른 프로그램은 이와 같습니다:
 
 ```rust,no_run
 use std::thread;
