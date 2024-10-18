@@ -162,7 +162,7 @@ impl<T: Ord> BinaryHeap<T> {
 
             while hole.pos() != 0 {
                 let parent = parent(hole.pos());
-                if hole.removed() <= hole.get(parent) { break }
+                if hole.removed() >= hole.get(parent) { break }
                 hole.move_to(parent);
             }
             // 구멍은 무조건 여기서 다시 채워질 겁니다: panic! 하든 하지 않든요!
