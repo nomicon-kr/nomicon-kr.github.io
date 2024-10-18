@@ -1,13 +1,8 @@
-# Concurrency and Parallelism
+# 동시성과 병렬성
 
-Rust as a language doesn't *really* have an opinion on how to do concurrency or
-parallelism. The standard library exposes OS threads and blocking sys-calls
-because everyone has those, and they're uniform enough that you can provide
-an abstraction over them in a relatively uncontroversial way. Message passing,
-green threads, and async APIs are all diverse enough that any abstraction over
-them tends to involve trade-offs that we weren't willing to commit to for 1.0.
+러스트는 언어로서 어떻게 동시성이나 병렬성을 처리할지에 대한 의견이 *딱히* 없습니다. 표준 라이브러리는 운영체제 스레드와 스레드 실행을 막는 시스템 콜들을 제공하는데, 다 있는 것들이기 때문이고, 
+또한 이것들은 동작이 충분히 안정적이라 여러분이 그것들을 이용해서 비교적으로 모순 없는 추상화를 제공할 수 있습니다. 
+메세지 전달, 녹색 스레드, 그리고 비동기 API는 모두 충분히 다양해서 그들을 이용해서 만든 어떤 추상화도, 우리가 1.0 버전을 출시하기까지 바라지 않았던, 성능과 편의성 사이의 등가교환을 수반했습니다.
 
-However the way Rust models concurrency makes it relatively easy to design your own
-concurrency paradigm as a library and have everyone else's code Just Work
-with yours. Just require the right lifetimes and Send and Sync where appropriate
-and you're off to the races. Or rather, off to the... not... having... races.
+하지만 러스트가 동시성을 구성하는 방식은 여러분만의 동시성 패러다임을 라이브러리로 설계하고 다른 사람들의 코드가 여러분의 코드와 *그냥 잘 동작하도록* 만들기에 비교적 쉽습니다. 
+그저 적절한 곳에 올바른 수명과 `Send`와 `Sync`를 요구하세요, 그러면 여러분은 경합 시작입니다. 아, 경합이 안... 일어나는... 편이... 좋겠네요.
