@@ -37,7 +37,7 @@
   * [누설](leaking.md)
 * [되감기](unwinding.md)
   * [예외 안전성](exception-safety.md)
-  * [Poisoning](poisoning.md)
+  * [오염](poisoning.md)
 * [Concurrency](concurrency.md)
   * [Races](races.md)
   * [Send and Sync](send-and-sync.md)
