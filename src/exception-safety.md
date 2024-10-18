@@ -106,12 +106,8 @@ bubble_up(heap, index):
 기본적인 생각은 간단합니다: 만약 비교 작업이 `panic!`한다면, 우리는 그냥 헐렁한 원소를 논리적으로 미초기화된 인덱스에 던지고 탈출합니다. 
 힙을 쳐다보는 사람들은 *조화롭지 않을* 수도 있는 힙을 보겠지만, 최소한 이러면 이중 해제는 초래하지 않을 겁니다! 알고리즘이 정상적으로 종료된다면, 이 작업은 어쨌든 우리가 끝내려고 했던 방향과 일치하게 됩니다.
 
-슬프게도, 러스트에는 그런 제어 구조가 없으므로, 우리는 우리만의 제어 구조를 만들어야 됩니다! 이것을 하는 방법은 
-
-Sadly, Rust has no such construct, so we're going to need to roll our own! The
-way to do this is to store the algorithm's state in a separate struct with a
-destructor for the "finally" logic. Whether we panic or not, that destructor
-will run and clean up after us.
+슬프게도, 러스트에는 그런 제어 구조가 없으므로, 우리는 우리만의 제어 구조를 만들어야 됩니다! 이것을 하는 방법은 알고리즘의 상태를 다른 구조체에 저장하고, 그 구조체에 "`finally`" 논리를 위한 소멸자를 추가하는 겁니다. 
+우리가 `panic!`하건 하지 않건, 그 소멸자는 실행되고 우리 뒤를 치워 줄 겁니다.
 
 <!-- ignore: simplified code -->
 ```rust,ignore
