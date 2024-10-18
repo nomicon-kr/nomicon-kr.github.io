@@ -39,7 +39,7 @@
   * [예외 안전성](exception-safety.md)
   * [오염](poisoning.md)
 * [동시성](concurrency.md)
-  * [Races](races.md)
+  * [경합](races.md)
   * [Send and Sync](send-and-sync.md)
   * [Atomics](atomics.md)
 * [Implementing Vec](./vec/vec.md)
