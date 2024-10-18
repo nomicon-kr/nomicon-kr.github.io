@@ -40,7 +40,7 @@
   * [오염](poisoning.md)
 * [동시성](concurrency.md)
   * [경합](races.md)
-  * [Send and Sync](send-and-sync.md)
+  * [Send와 Sync](send-and-sync.md)
   * [Atomics](atomics.md)
 * [Implementing Vec](./vec/vec.md)
   * [Layout](./vec/vec-layout.md)
