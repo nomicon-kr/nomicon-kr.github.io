@@ -63,12 +63,12 @@ We start by writing code to take a value allocated on the stack and transfer it
 to the heap.
 
 ```rust
-# pub mod libc {
-#    pub use ::std::os::raw::{c_int, c_void};
-#    #[allow(non_camel_case_types)]
-#    pub type size_t = usize;
-#    extern "C" { pub fn posix_memalign(memptr: *mut *mut c_void, align: size_t, size: size_t) -> c_int; }
-# }
+pub mod libc {
+    pub use ::std::os::raw::{c_int, c_void};
+    #[allow(non_camel_case_types)]
+    pub type size_t = usize;
+    extern "C" { pub fn posix_memalign(memptr: *mut *mut c_void, align: size_t, size: size_t) -> c_int; }
+}
 use std::{
     mem::{align_of, size_of},
     ptr,
