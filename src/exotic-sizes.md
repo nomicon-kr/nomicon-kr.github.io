@@ -79,9 +79,10 @@ struct LotsOfNothing {
 
 안전한 코드는 영량 타입에 대해서 걱정하지 않아도 되지만, *불안전한* 코드는 크기가 없는 타입의 중요성을 신경써야 합니다. 특히 포인터 오프셋은 아무 작업도 하지 않는 것과 같고, 할당자는 보통 [0이 아닌 크기를 요구합니다][alloc].
 
-영량 타입을 가리키는 레퍼런스(빈 슬라이스 포함)는 다른 레퍼런스와 마찬가지로, 널이 아니고 잘 정렬되어 있어야 합니다. 영량 타입을 가리키지만 널이나 정렬되지 않은 포인터를 역참조하는 것 역시, 다른 타입들과 마찬가지로 [미정의 동작][ub]입니다.
+영량 타입을 가리키는 레퍼런스(빈 슬라이스 포함)는 다른 레퍼런스와 다르게, [널이어도 되지만][dangling_pointer] 잘 정렬되어 있어야 합니다. 영량 타입을 가리키지만 정렬되지 않은 포인터를 역참조하는 것 역시, 다른 타입들과 마찬가지로 [미정의 동작][ub]입니다.
 
 [alloc]: https://doc.rust-lang.org/std/alloc/trait.GlobalAlloc.html#tymethod.alloc
+[dangling_pointer]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html#dangling-pointers
 [ub]: what-unsafe-does.html
 
 ## 빈 타입
