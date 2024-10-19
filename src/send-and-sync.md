@@ -15,9 +15,11 @@
 
 대표적인 예외들은 다음과 같습니다:
 
-* raw pointers are neither Send nor Sync (because they have no safety guards).
-* `UnsafeCell` isn't Sync (and therefore `Cell` and `RefCell` aren't).
-* `Rc` isn't Send or Sync (because the refcount is shared and unsynchronized).
+* 생 포인터들은 `Send`도 `Sync`도 아닙니다 (안전 장치가 없기 때문이죠).
+* `UnsafeCell`은 `Sync`가 아닙니다 (그리고 따라서 `Cell`과 `RefCell`도 아닙니다).
+* `Rc`는 `Send`도 `Sync`도 아닙니다 (참조 횟수가 공유되고, 동기화가 없기 때문입니다).
+
+`Rc`와 `UnsafeCell`은 매우 근본적으로 스레드 경계에서 안전하지 않습니다: 동기화되지 않는 가변 공유 상태를 가지기 때문입니다. 하지만 생 포인터들은, 엄밀하게 말해서, *정보 차원에서* 스레드 경계 불안전하다고 표시된 것에 가깝습니다. 
 
 `Rc` and `UnsafeCell` are very fundamentally not thread-safe: they enable
 unsynchronized shared mutable state. However raw pointers are, strictly
