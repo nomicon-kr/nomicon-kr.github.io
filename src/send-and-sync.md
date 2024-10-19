@@ -193,19 +193,10 @@ impl<T> Drop for Carton<T> {
 }
 ```
 
-이런 일이 일어나지 않는 좋은 예는 `MutexGuard`입니다: 어떻게 [이것이 `Send`가 아닌지를][mutex-guard-not-send-docs-rs] 유의하세요.
-
-A nice example where this does not happen is with a MutexGuard: notice how
-[it is not Send][mutex-guard-not-send-docs-rs]. The implementation of MutexGuard
-[uses libraries][mutex-guard-not-send-comment] that require you to ensure you
-don't try to free a lock that you acquired in a different thread. If you were
-able to Send a MutexGuard to another thread the destructor would run in the
-thread you sent it to, violating the requirement. MutexGuard can still be Sync
-because all you can send to another thread is an `&MutexGuard` and dropping a
-reference does nothing.
-
-TODO: better explain what can or can't be Send or Sync. Sufficient to appeal
-only to data races?
+이런 일이 일어나지 않는 좋은 예는 `MutexGuard`입니다: 어떻게 [이것이 `Send`가 아닌지를][mutex-guard-not-send-docs-rs] 유의하세요. 
+`MutexGuard`의 구현은 여러분이 다른 스레드에서 얻은 락을 해제하려 하지 않는다는 것을 확실히 하도록 요구하는 [라이브러리를 사용합니다][mutex-guard-not-send-comment]. 
+만약 `MutexGuard`를 다른 스레드로 보낼 수 있다면 소멸자는 여러분이 보낸 그 스레드에서 실행될 것이고, 요구사항은 충족되지 않을 것입니다. 
+`MutexGuard`는 그래도 `Sync`일 수 있는데, 여러분이 다른 스레드로 보낼 수 있는 건 `&MutexGuard`이고, 레퍼런스를 해제하는 것은 아무 작업도 실행하지 않기 때문입니다.
 
 [unsafe_traits]: safe-unsafe-meaning.html
 [box-doc]: https://doc.rust-lang.org/std/boxed/struct.Box.html
