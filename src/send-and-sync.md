@@ -167,24 +167,16 @@ struct Carton<T>(std::ptr::NonNull<T>);
 unsafe impl<T> Sync for Carton<T> where T: Sync  {}
 ```
 
-
-
-When we assert our type is Send and Sync we usually need to enforce that every
-contained type is Send and Sync. When writing custom types that behave like
-standard library types we can assert that we have the same requirements.
-For example, the following code asserts that a Carton is Send if the same
-sort of Box would be Send, which in this case is the same as saying T is Send.
+우리의 타입이 `Send`이고 `Sync`인지 판별할 때 우리는 보통 포함되어 있는 모든 타입이 `Send`이고 `Sync`인 것을 강제합니다. 표준 라이브러리 타입처럼 동작하는 수제 타입을 작성할 때 우리는 같은 요구사항을 가지는지 판별할 수 있습니다. 
+예를 들어, 다음의 코드는 비슷한 `Box`가 `Send`가 된다면 `Carton`이 `Send`라고 판별합니다 (이 경우에는 `T`가 `Send`이면 `Box`가 `Send`가 되므로, 결국 조건은 "`T`가 `Send`라면" 이라는 말과 같습니다).
 
 ```rust
 struct Carton<T>(std::ptr::NonNull<T>);
 unsafe impl<T> Send for Carton<T> where Box<T>: Send {}
 ```
 
-Right now `Carton<T>` has a memory leak, as it never frees the memory it allocates.
-Once we fix that we have a new requirement we have to ensure we meet to be Send:
-we need to know `free` can be called on a pointer that was yielded by an
-allocation done on another thread. We can check this is true in the docs for
-[`libc::free`][libc-free-docs].
+지금 당장은 `Carton<T>`은 메모리 누수가 있는데, 할당한 메모리를 절대 해제하지 않기 때문입니다. 이것을 고치면 `Send`가 되기 위한 새로운 요구사항이 생기게 됩니다: 
+우리는 다른 스레드에서 할당되어 넘어온 포인터에 `free`를 호출할 수 있는지 알아야 합니다. [`libc::free`의 문서에서][libc-free-docs] 이것이 사실이라는 것을 확인할 수 있습니다.
 
 ```rust
 struct Carton<T>(std::ptr::NonNull<T>);
@@ -200,6 +192,8 @@ impl<T> Drop for Carton<T> {
     }
 }
 ```
+
+이런 일이 일어나지 않는 좋은 예는 `MutexGuard`입니다: 어떻게 [이것이 `Send`가 아닌지를][mutex-guard-not-send-docs-rs] 유의하세요.
 
 A nice example where this does not happen is with a MutexGuard: notice how
 [it is not Send][mutex-guard-not-send-docs-rs]. The implementation of MutexGuard
