@@ -54,13 +54,10 @@ impl !Sync for SpecialThreadToken {}
 
 ## 예제
 
-[`Box`][box-doc] is implemented as its own special intrinsic type by the
-compiler for [various reasons][box-is-special], but we can implement something
-with similar-ish behavior ourselves to see an example of when it is sound to
-implement Send and Sync. Let's call it a `Carton`.
+[`Box`][box-doc]는 [여러 가지 이유 때문에][box-is-special] 컴파일러 내부의 특별한 타입으로 구현되어 있지만, 우리는 비슷한 동작을 하는 무언가를 만들어서 언제 `Send`와 `Sync`를 구현하는 것이 적절한지 예제를 삼을 수 있습니다. 
+이것을 `Carton`이라 부르겠습니다.
 
-We start by writing code to take a value allocated on the stack and transfer it
-to the heap.
+우리는 먼저 스택에 할당된 값을 받아서 힙으로 옮기는 코드를 작성하겠습니다.
 
 ```rust
 pub mod libc {
@@ -79,8 +76,8 @@ struct Carton<T>(ptr::NonNull<T>);
 
 impl<T> Carton<T> {
     pub fn new(value: T) -> Self {
-        // Allocate enough memory on the heap to store one T.
-        assert_ne!(size_of::<T>(), 0, "Zero-sized types are out of the scope of this example");
+        // 힙에 하나의 T를 저장하기에 충분한 메모리를 할당합니다.
+        assert_ne!(size_of::<T>(), 0, "영량 타입은 이 예제에서는 다루지 않습니다");
         let mut memptr: *mut T = ptr::null_mut();
         unsafe {
             let ret = libc::posix_memalign(
@@ -88,21 +85,21 @@ impl<T> Carton<T> {
                 max(align_of::<T>(), size_of::<usize>()),
                 size_of::<T>()
             );
-            assert_eq!(ret, 0, "Failed to allocate or invalid alignment");
+            assert_eq!(ret, 0, "할당 실패 혹은 올바르지 않은 정렬선");
         };
 
-        // NonNull is just a wrapper that enforces that the pointer isn't null.
+        // NonNull은 그저 포인터가 널이 아니도록 강제하는 구조일 뿐입니다.
         let ptr = {
-            // Safety: memptr is dereferenceable because we created it from a
-            // reference and have exclusive access.
+            // 안전성: memptr 은 우리가 레퍼런스에서 생성했고 우리가 독점적으로 가지고
+            // 있기 때문에 역참조할 수 있습니다.
             ptr::NonNull::new(memptr)
-                .expect("Guaranteed non-null if posix_memalign returns 0")
+                .expect("posix_memalign이 0을 반환했으니 널이 아님이 보장됨")
         };
 
-        // Move value from the stack to the location we allocated on the heap.
+        // 값을 스택에서 우리가 힙에 할당한 위치로 옮깁니다.
         unsafe {
-            // Safety: If non-null, posix_memalign gives us a ptr that is valid
-            // for writes and properly aligned.
+            // 안전성: 널이 아니라면, posix_memalign은 유효하게 쓸 수 있고
+            // 잘 정렬된 포인터를 반환합니다.
             ptr.as_ptr().write(value);
         }
 
