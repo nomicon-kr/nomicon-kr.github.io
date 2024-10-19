@@ -1,28 +1,17 @@
-# Atomics
+# 원자들 (Atomics)
 
-Rust pretty blatantly just inherits the memory model for atomics from C++20. This is not
-due to this model being particularly excellent or easy to understand. Indeed,
-this model is quite complex and known to have [several flaws][C11-busted].
-Rather, it is a pragmatic concession to the fact that *everyone* is pretty bad
-at modeling atomics. At very least, we can benefit from existing tooling and
-research around the C/C++ memory model.
-(You'll often see this model referred to as "C/C++11" or just "C11". C just copies
-the C++ memory model; and C++11 was the first version of the model but it has
-received some bugfixes since then.)
+러스트는 원자들의 메모리 모델에 관해서는 꽤나 대놓고 C++20의 것을 그대로 이어받습니다. 그것은 이 모델이 특별히 대단하거나 이해하기 쉬워서가 아닙니다. 
+오히려 이 모델은 꽤 복잡하고 [몇 가지 문제점이 있는 것으로][C11-busted] 알려져 있습니다. 그러나 이것은 *모두가* 원자들을 설계하는 것은 잘 못한다는 사실에 실리적으로 인정하는 것입니다. 
+정말 최소한, 우리는 C/C++의 메모리 모델 주변에 있는 도구들과 연구들의 혜택을 받을 수 있습니다. (여러분은 이 모델을 "C/C++11" 혹은 그냥 "C11"로 부르는 것을 볼 것입니다. 
+C는 그냥 C++의 메모리 모델을 복사합니다. 또한 C++11은 그 모델의 처음 버전이었지만 그 뒤로 몇 가지 버그 수정을 받았습니다.)
 
-Trying to fully explain the model in this book is fairly hopeless. It's defined
-in terms of madness-inducing causality graphs that require a full book to
-properly understand in a practical way. If you want all the nitty-gritty
-details, you should check out the [C++ specification][C++-model].
-Still, we'll try to cover the basics and some of the problems Rust developers
-face.
+이 팩에서 그 모델을 전부 설명하는 것은 별로 희망이 없습니다. 실용적으로 제대로 이해하려면 하나의 책이 통째로 필요할 만큼, 사람을 정신 나가게 만드는 인과관계 그래프들로 정의되어 있거든요. 
+만약 모든 자질구레한 세부사항을 알고 싶다면, [C++ 명세를][C++-model] 보셔야 할 겁니다. 그래도, 우리는 기본적인 것과 러스트 개발자들이 마주하는 몇 가지 문제들을 설명하려 노력할 것입니다.
 
-The C++ memory model is fundamentally about trying to bridge the gap between the
-semantics we want, the optimizations compilers want, and the inconsistent chaos
-our hardware wants. *We* would like to just write programs and have them do
-exactly what we said but, you know, fast. Wouldn't that be great?
+C++ 메모리 모델은 근본적으로 우리가 원하는 의미와, 컴파일러가 원하는 최적화와, 우리의 하드웨어가 원하는 비일관적인 혼돈 사이에 다리를 놓고자 하는 것입니다. 
+*우리는* 그저 프로그램을 짜고 정확히 우리가 시킨 대로 하게 할 것입니다, 다만 빠르게요. 좋을 것 같지 않습니까?
 
-## Compiler Reordering
+## 컴파일러 재배치
 
 Compilers fundamentally want to be able to do all sorts of complicated
 transformations to reduce data dependencies and eliminate dead code. In
