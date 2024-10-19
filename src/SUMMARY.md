@@ -41,7 +41,7 @@
 * [동시성](concurrency.md)
   * [경합](races.md)
   * [Send와 Sync](send-and-sync.md)
-  * [Atomics](atomics.md)
+  * [원자들](atomics.md)
 * [Implementing Vec](./vec/vec.md)
   * [Layout](./vec/vec-layout.md)
   * [Allocating](./vec/vec-alloc.md)
