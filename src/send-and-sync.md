@@ -47,7 +47,7 @@ impl !Send for SpecialThreadToken {}
 impl !Sync for SpecialThreadToken {}
 ```
 
-*그 자체로는* 올바르지 않게 `Send`와 `Sync`를 파생받는 것이 불가는하다는 것에 주의하세요. 다른 불안전한 코드에 의해 특별한 의미를 부여받은 타입들만 올바르지 않게 `Send`나 `Sync`가 됨으로써 문제를 일으킬 가능성이 있습니다.
+*그 자체로는* 올바르지 않게 `Send`와 `Sync`를 파생받는 것이 불가능하다는 것에 주의하세요. 다른 불안전한 코드에 의해 특별한 의미를 부여받은 타입들만 올바르지 않게 `Send`나 `Sync`가 됨으로써 문제를 일으킬 가능성이 있습니다.
 
 생 포인터를 사용하는 대부분의 코드는 `Send`와 `Sync`가 파생되어도 좋을 만큼 충분한 추상화 안에 갇혀야 합니다. 예를 들어 러스트의 표준 컬렉션들은 모두 `Send`와 `Sync`입니다 (`Send`와 `Sync` 타입을 포함할 때), 
 비록 할당과 복잡한 소유권은 관리하기 위해 생 포인터를 많이 사용하긴 했어도 말입니다. 마찬가지로, 이 컬렉션의 대부분의 반복자들은 `Send`와 `Sync`인데, 이들이 컬렉션에 대해 많은 부분 `&`나 `&mut`와 같이 동작하기 때문입니다.
@@ -108,6 +108,9 @@ impl<T> Carton<T> {
 }
 ```
 
+이건 그렇게 쓸모가 있지는 않군요, 우리의 사용자들이 값을 주고 나면 그 값을 접근할 방법이 없네요. [`Box`][box-doc]는 [`Deref`와][deref-doc] [`DerefMut`를][deref-mut-doc] 구현해서 안의 값을 접근할 수 있게 합니다. 
+우리도 이걸 합시다.
+
 This isn't very useful, because once our users give us a value they have no way
 to access it. [`Box`][box-doc] implements [`Deref`][deref-doc] and
 [`DerefMut`][deref-mut-doc] so that you can access the inner value. Let's do
@@ -123,12 +126,11 @@ impl<T> Deref for Carton<T> {
 
     fn deref(&self) -> &Self::Target {
         unsafe {
-            // Safety: The pointer is aligned, initialized, and dereferenceable
-            //   by the logic in [`Self::new`]. We require readers to borrow the
-            //   Carton, and the lifetime of the return value is elided to the
-            //   lifetime of the input. This means the borrow checker will
-            //   enforce that no one can mutate the contents of the Carton until
-            //   the reference returned is dropped.
+            // 안전성: 포인터는 [`Self::new`]의 논리에 의해 정렬되어 있고, 초기화되었으며,
+            // 역참조할 수 있습니다. 우리는 이것을 읽는 사람들이 `Carton`을 빌리기를 요구하고,
+            // 반환값의 수명은 입력의 수명과 동기화됩니다. 이것이 의미하는 것은 반환된 레퍼런스가
+            // 해제될 때까지 아무도 `Carton`의 내용물을 변경하지 못하도록 대여 검사기가
+            // 강제할 거라는 겁니다.
             self.0.as_ref()
         }
     }
@@ -137,39 +139,38 @@ impl<T> Deref for Carton<T> {
 impl<T> DerefMut for Carton<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe {
-            // Safety: The pointer is aligned, initialized, and dereferenceable
-            //   by the logic in [`Self::new`]. We require writers to mutably
-            //   borrow the Carton, and the lifetime of the return value is
-            //   elided to the lifetime of the input. This means the borrow
-            //   checker will enforce that no one else can access the contents
-            //   of the Carton until the mutable reference returned is dropped.
+            // 안전성: 포인터는 [`Self::new`]의 논리에 의해 정렬되어 있고, 초기화되었으며,
+            // 역참조할 수 있습니다. 우리는 이것을 변경하는 사람들이 `Carton`을 가변으로 빌리기를 요구하고,
+            // 반환값의 수명은 입력의 수명과 동기화됩니다. 이것이 의미하는 것은 반환된 가변 레퍼런스가
+            // 해제될 때까지 아무도 `Carton`의 내용물을 접근하지 못하도록 대여 검사기가
+            // 강제할 거라는 겁니다.
             self.0.as_mut()
         }
     }
 }
 ```
 
-Finally, let's think about whether our `Carton` is Send and Sync. Something can
-safely be Send unless it shares mutable state with something else without
-enforcing exclusive access to it. Each `Carton` has a unique pointer, so
-we're good.
+마지막으로, 우리의 `Carton`이 `Send`인지, 그리고 `Sync`인지 생각해 봅시다. 어떤 타입이 가변 상태를 독점적 접근을 강제하지 않고 다른 타입과 공유하지 않으면 안전하게 `Send`가 될 수 있습니다. 
+각 `Carton`은 독립된 포인터를 가지고 있으므로, 괜찮은 것 같습니다.
 
 ```rust
 struct Carton<T>(std::ptr::NonNull<T>);
-// Safety: No one besides us has the raw pointer, so we can safely transfer the
-// Carton to another thread if T can be safely transferred.
+// 안전성: 우리 말고는 이 생 포인터를 가지고 있지 않으므로, 만약 `T`가 안전하게 다른 스레드로 보낼 수 있다면
+// `Carton`도 안전하게 보낼 수 있습니다.
 unsafe impl<T> Send for Carton<T> where T: Send {}
 ```
 
-What about Sync? For `Carton` to be Sync we have to enforce that you can't
-write to something stored in a `&Carton` while that same something could be read
-or written to from another `&Carton`. Since you need an `&mut Carton` to
-write to the pointer, and the borrow checker enforces that mutable
-references must be exclusive, there are no soundness issues making `Carton`
-sync either.
+`Sync`는 어떨까요? `Carton`이 `Sync`가 되기 위해서 우리는 `&Carton`에 저장된 내용물이 읽히거나 변경되는 도중 다른 `&Carton`에 있는 그 내용물을 변경할 수 없다는 것을 강제해야 합니다. 
+그 포인터에 쓰려면 `&mut Carton`이 필요하고, 대여 검사기가 그 가변 레퍼런스가 독점적일 것을 강제하므로, `Carton`을 `Sync`로 만드는 것에 있어서도 건전성 문제는 없습니다.
 
 ```rust
 struct Carton<T>(std::ptr::NonNull<T>);
+// 안전성: 
+//
+//
+//
+//
+//
 // Safety: Since there exists a public way to go from a `&Carton<T>` to a `&T`
 // in an unsynchronized fashion (such as `Deref`), then `Carton<T>` can't be
 // `Sync` if `T` isn't.
