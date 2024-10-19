@@ -1,28 +1,19 @@
 # Send와 Sync
 
-Not everything obeys inherited mutability, though. Some types allow you to
-have multiple aliases of a location in memory while mutating it. Unless these types use
-synchronization to manage this access, they are absolutely not thread-safe. Rust
-captures this through the `Send` and `Sync` traits.
+그래도 모든 것이 가변성을 물려받지는 않습니다. 어떤 타입들은 여러분이 메모리의 어떤 위치를 변경하면서도 여러 번 가리킬 수 있게 해 줍니다. 이 타입들이 이런 접근들을 동기화로 관리하지 않는다면 절대로 스레드 경계에서 안전하지 않습니다. 
+러스트는 이런 특징을 `Send`와 `Sync` 트레잇을 통해 알아챕니다.
 
-* A type is Send if it is safe to send it to another thread.
-* A type is Sync if it is safe to share between threads (T is Sync if and only if `&T` is Send).
+* 어떤 타입이 다른 스레드로 보내도 안전하다면 `Send`입니다.
+* 어떤 타입이 스레드 간에 공유해도 안전하다면 `Sync`입니다 (`T`는 오직 `&T`가 `Send`인 경우에만 `Sync`입니다).
 
-Send and Sync are fundamental to Rust's concurrency story. As such, a
-substantial amount of special tooling exists to make them work right. First and
-foremost, they're [unsafe traits]. This means that they are unsafe to
-implement, and other unsafe code can assume that they are correctly
-implemented. Since they're *marker traits* (they have no associated items like
-methods), correctly implemented simply means that they have the intrinsic
-properties an implementor should have. Incorrectly implementing Send or Sync can
-cause Undefined Behavior.
+`Send`와 `Sync`는 러스트의 동시성 이야기에 근본이 됩니다. 그런 면에서, 이들이 잘 동작하도록 하는 상당한 양의 특수 장치들이 있습니다. 첫째로, 그리고 가장 중요한 것은, 이들은 [불안전한 트레잇입니다][unsafe_traits]. 
+이 뜻은 이것들을 구현하는 것이 불안전하다는 의미이며, 다른 불안전한 코드가 이 구현들을 신뢰할 수 있다는 말입니다. 이것들이 *표시 트레잇이기* 때문에 (이것들은 메서드와 같은 연관된 것들이 없습니다), 
+이것들이 잘 구현되었다는 것은 단지 구현하면 가져야 하는 본질적인 속성을 가졌다는 뜻입니다. `Send`나 `Sync`를 잘못 구현하는 것은 **미정의 동작을** 유발할 수 있습니다.
 
-Send and Sync are also automatically derived traits. This means that, unlike
-every other trait, if a type is composed entirely of Send or Sync types, then it
-is Send or Sync. Almost all primitives are Send and Sync, and as a consequence
-pretty much all types you'll ever interact with are Send and Sync.
+`Send`와 `Sync`는 또한 자동으로 파생되는 트레잇들입니다. 이것이 의미하는 것은, 다른 모든 트레잇과 달리, 어떤 타입이 `Send`/`Sync` 타입들로만 이루어져 있다면, 그 타입 또한 `Send`/`Sync`라는 것입니다. 
+거의 모든 기본 타입이 `Send`이고 `Sync`이고, 그 결과로 여러분이 상호작용하게 될 거의 모든 타입들은 `Send`이고 `Sync`입니다. 
 
-Major exceptions include:
+대표적인 예외들은 다음과 같습니다:
 
 * raw pointers are neither Send nor Sync (because they have no safety guards).
 * `UnsafeCell` isn't Sync (and therefore `Cell` and `RefCell` aren't).
@@ -248,7 +239,7 @@ reference does nothing.
 TODO: better explain what can or can't be Send or Sync. Sufficient to appeal
 only to data races?
 
-[unsafe traits]: safe-unsafe-meaning.html
+[unsafe_traits]: safe-unsafe-meaning.html
 [box-doc]: https://doc.rust-lang.org/std/boxed/struct.Box.html
 [box-is-special]: https://manishearth.github.io/blog/2017/01/10/rust-tidbits-box-is-special/
 [deref-doc]: https://doc.rust-lang.org/core/ops/trait.Deref.html
