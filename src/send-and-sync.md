@@ -111,11 +111,6 @@ impl<T> Carton<T> {
 이건 그렇게 쓸모가 있지는 않군요, 우리의 사용자들이 값을 주고 나면 그 값을 접근할 방법이 없네요. [`Box`][box-doc]는 [`Deref`와][deref-doc] [`DerefMut`를][deref-mut-doc] 구현해서 안의 값을 접근할 수 있게 합니다. 
 우리도 이걸 합시다.
 
-This isn't very useful, because once our users give us a value they have no way
-to access it. [`Box`][box-doc] implements [`Deref`][deref-doc] and
-[`DerefMut`][deref-mut-doc] so that you can access the inner value. Let's do
-that.
-
 ```rust
 use std::ops::{Deref, DerefMut};
 
@@ -150,7 +145,7 @@ impl<T> DerefMut for Carton<T> {
 }
 ```
 
-마지막으로, 우리의 `Carton`이 `Send`인지, 그리고 `Sync`인지 생각해 봅시다. 어떤 타입이 가변 상태를 독점적 접근을 강제하지 않고 다른 타입과 공유하지 않으면 안전하게 `Send`가 될 수 있습니다. 
+마지막으로, 우리의 `Carton`이 `Send`인지, 그리고 `Sync`인지 생각해 봅시다. 어떤 타입이 가변 상태를 독점적 접근을 강제하지 않고 다른 타입과 공유하는 일이 없으면 안전하게 `Send`가 될 수 있습니다. 
 각 `Carton`은 독립된 포인터를 가지고 있으므로, 괜찮은 것 같습니다.
 
 ```rust
@@ -165,20 +160,14 @@ unsafe impl<T> Send for Carton<T> where T: Send {}
 
 ```rust
 struct Carton<T>(std::ptr::NonNull<T>);
-// 안전성: 
-//
-//
-//
-//
-//
-// Safety: Since there exists a public way to go from a `&Carton<T>` to a `&T`
-// in an unsynchronized fashion (such as `Deref`), then `Carton<T>` can't be
-// `Sync` if `T` isn't.
-// Conversely, `Carton` itself does not use any interior mutability whatsoever:
-// all the mutations are performed through an exclusive reference (`&mut`). This
-// means it suffices that `T` be `Sync` for `Carton<T>` to be `Sync`:
+// 안전성: 동기화되지 않고 `&Carton<T>`에서 `&T`로 가는 공개적인 방법이 존재하므로 (`Deref` 같은),
+// `Carton<T>`는 `T`가 `Sync`가 아니라면 `Sync`가 될 수 없습니다.
+// 역으로 보면, `Carton` 자체는 아무 내부 가변성도 전혀 사용하지 않습니다: 모든 변경은 독점적 레퍼런스(`&mut`)를
+// 통해 이루어지죠. 이것이 의미하는 것은 `T`가 `Sync`면 `Carton<T>`가 `Sync`가 되기에 충분하다는 겁니다:
 unsafe impl<T> Sync for Carton<T> where T: Sync  {}
 ```
+
+
 
 When we assert our type is Send and Sync we usually need to enforce that every
 contained type is Send and Sync. When writing custom types that behave like
