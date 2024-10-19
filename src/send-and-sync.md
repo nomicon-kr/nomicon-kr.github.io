@@ -198,10 +198,10 @@ allocation done on another thread. We can check this is true in the docs for
 
 ```rust
 struct Carton<T>(std::ptr::NonNull<T>);
-# mod libc {
-#     pub use ::std::os::raw::c_void;
-#     extern "C" { pub fn free(p: *mut c_void); }
-# }
+mod libc {
+     pub use ::std::os::raw::c_void;
+     extern "C" { pub fn free(p: *mut c_void); }
+}
 impl<T> Drop for Carton<T> {
     fn drop(&mut self) {
         unsafe {
