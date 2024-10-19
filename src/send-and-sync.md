@@ -20,21 +20,13 @@
 * `Rc`는 `Send`도 `Sync`도 아닙니다 (참조 횟수가 공유되고, 동기화가 없기 때문입니다).
 
 `Rc`와 `UnsafeCell`은 매우 근본적으로 스레드 경계에서 안전하지 않습니다: 동기화되지 않는 가변 공유 상태를 가지기 때문입니다. 하지만 생 포인터들은, 엄밀하게 말해서, *정보 차원에서* 스레드 경계 불안전하다고 표시된 것에 가깝습니다. 
+생 포인터로 무언가 쓸모있는 것을 하려면 역참조를 해야 하는데, 이것은 이미 불안전하죠. 그런 점에서, 생 포인터들이 스레드 경계에서 안전하다고 표시되어도 "괜찮다"고 주장할 수 있습니다.
 
-`Rc` and `UnsafeCell` are very fundamentally not thread-safe: they enable
-unsynchronized shared mutable state. However raw pointers are, strictly
-speaking, marked as thread-unsafe as more of a *lint*. Doing anything useful
-with a raw pointer requires dereferencing it, which is already unsafe. In that
-sense, one could argue that it would be "fine" for them to be marked as thread
-safe.
+하지만 이것들이 스레드 경계에서 불안전하다고 표시된 것은 그들을 포함하는 타입들이 자동으로 스레드 경계에서 안전하다는 표시를 받는 것을 방지하기 위해서라는 점이 중요합니다. 
+그런 타입들은 흔하지 않은, 추적되지 않는 소유권을 가지고 있는데, 그 타입의 제작자가 스레드 안전성에 대해 반드시 깊이 고민했다고 보기는 어렵습니다. 
+`Rc`의 경우를 볼 때, 확실히 스레드 경계에서 안전하지 않은 `*mut`를 포함하는 타입의 좋은 예가 됩니다.
 
-However it's important that they aren't thread-safe to prevent types that
-contain them from being automatically marked as thread-safe. These types have
-non-trivial untracked ownership, and it's unlikely that their author was
-necessarily thinking hard about thread safety. In the case of `Rc`, we have a nice
-example of a type that contains a `*mut` that is definitely not thread-safe.
-
-Types that aren't automatically derived can simply implement them if desired:
+자동으로 파생되지 않는 타입들은 원할 경우 그냥 구현할 수 있습니다:
 
 ```rust
 struct MyBox(*mut u8);
@@ -43,31 +35,24 @@ unsafe impl Send for MyBox {}
 unsafe impl Sync for MyBox {}
 ```
 
-In the *incredibly rare* case that a type is inappropriately automatically
-derived to be Send or Sync, then one can also unimplement Send and Sync:
+어떤 타입이 부적절하게 자동으로 `Send`나 `Sync`로 파생되는 *굉장히 희귀한* 경우, `Send`와 `Sync`의 구현을 해제할 수도 있습니다:
 
 ```rust
 #![feature(negative_impls)]
 
-// I have some magic semantics for some synchronization primitive!
+// 어떤 동기화 기초 타입을 위한 어떤 마법적인 의미가 있어요!
 struct SpecialThreadToken(u8);
 
 impl !Send for SpecialThreadToken {}
 impl !Sync for SpecialThreadToken {}
 ```
 
-Note that *in and of itself* it is impossible to incorrectly derive Send and
-Sync. Only types that are ascribed special meaning by other unsafe code can
-possibly cause trouble by being incorrectly Send or Sync.
+*그 자체로는* 올바르지 않게 `Send`와 `Sync`를 파생받는 것이 불가는하다는 것에 주의하세요. 다른 불안전한 코드에 의해 특별한 의미를 부여받은 타입들만 올바르지 않게 `Send`나 `Sync`가 됨으로써 문제를 일으킬 가능성이 있습니다.
 
-Most uses of raw pointers should be encapsulated behind a sufficient abstraction
-that Send and Sync can be derived. For instance all of Rust's standard
-collections are Send and Sync (when they contain Send and Sync types) in spite
-of their pervasive use of raw pointers to manage allocations and complex ownership.
-Similarly, most iterators into these collections are Send and Sync because they
-largely behave like an `&` or `&mut` into the collection.
+생 포인터를 사용하는 대부분의 코드는 `Send`와 `Sync`가 파생되어도 좋을 만큼 충분한 추상화 안에 갇혀야 합니다. 예를 들어 러스트의 표준 컬렉션들은 모두 `Send`와 `Sync`입니다 (`Send`와 `Sync` 타입을 포함할 때), 
+비록 할당과 복잡한 소유권은 관리하기 위해 생 포인터를 많이 사용하긴 했어도 말입니다. 마찬가지로, 이 컬렉션의 대부분의 반복자들은 `Send`와 `Sync`인데, 이들이 컬렉션에 대해 많은 부분 `&`나 `&mut`와 같이 동작하기 때문입니다.
 
-## Example
+## 예제
 
 [`Box`][box-doc] is implemented as its own special intrinsic type by the
 compiler for [various reasons][box-is-special], but we can implement something
@@ -134,8 +119,8 @@ that.
 ```rust
 use std::ops::{Deref, DerefMut};
 
-# struct Carton<T>(std::ptr::NonNull<T>);
-#
+struct Carton<T>(std::ptr::NonNull<T>);
+
 impl<T> Deref for Carton<T> {
     type Target = T;
 
@@ -173,7 +158,7 @@ enforcing exclusive access to it. Each `Carton` has a unique pointer, so
 we're good.
 
 ```rust
-# struct Carton<T>(std::ptr::NonNull<T>);
+struct Carton<T>(std::ptr::NonNull<T>);
 // Safety: No one besides us has the raw pointer, so we can safely transfer the
 // Carton to another thread if T can be safely transferred.
 unsafe impl<T> Send for Carton<T> where T: Send {}
@@ -187,7 +172,7 @@ references must be exclusive, there are no soundness issues making `Carton`
 sync either.
 
 ```rust
-# struct Carton<T>(std::ptr::NonNull<T>);
+struct Carton<T>(std::ptr::NonNull<T>);
 // Safety: Since there exists a public way to go from a `&Carton<T>` to a `&T`
 // in an unsynchronized fashion (such as `Deref`), then `Carton<T>` can't be
 // `Sync` if `T` isn't.
@@ -204,7 +189,7 @@ For example, the following code asserts that a Carton is Send if the same
 sort of Box would be Send, which in this case is the same as saying T is Send.
 
 ```rust
-# struct Carton<T>(std::ptr::NonNull<T>);
+struct Carton<T>(std::ptr::NonNull<T>);
 unsafe impl<T> Send for Carton<T> where Box<T>: Send {}
 ```
 
@@ -215,7 +200,7 @@ allocation done on another thread. We can check this is true in the docs for
 [`libc::free`][libc-free-docs].
 
 ```rust
-# struct Carton<T>(std::ptr::NonNull<T>);
+struct Carton<T>(std::ptr::NonNull<T>);
 # mod libc {
 #     pub use ::std::os::raw::c_void;
 #     extern "C" { pub fn free(p: *mut c_void); }
