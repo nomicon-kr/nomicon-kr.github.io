@@ -65,7 +65,7 @@ x = 1;              y *= 2;
 
 * `y = 2`: 스레드 2는 `x = 1`을 봤지만, `y = 3`은 보지 못하고 `y = 3`을 덮어썼습니다
 
-
+다른 종류의 CPU는 다른 보장들을 제공한다는 것은 한번 짚고 넘어가겠습니다. 하드웨어를 두 개의 종류로 구분하는 것은 흔한 일입니다: 강하게 정렬된 것과 약하게 정렬된 것들이죠.
 
 It's worth noting that different kinds of CPU provide different guarantees. It
 is common to separate hardware into two categories: strongly-ordered and weakly-ordered.
