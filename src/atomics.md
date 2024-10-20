@@ -13,10 +13,8 @@ C++ 메모리 모델은 근본적으로 우리가 원하는 의미와, 컴파일
 
 ## 컴파일러 재배치
 
-Compilers fundamentally want to be able to do all sorts of complicated
-transformations to reduce data dependencies and eliminate dead code. In
-particular, they may radically change the actual order of events, or make events
-never occur! If we write something like:
+컴파일러는 근본적으로 모든 종류의 복잡한 변형을 가해서 데이터 의존성을 줄이고 죽은 코드를 제거할 수 있기를 원합니다. 특히, 컴파일러는 사건들의 실제 순서를 과격하게 바꾸거나, 사건들이 아예 일어나지 않도록 할 수도 있습니다! 
+우리가 만약 이런 코드를 짠다면:
 
 <!-- ignore: simplified code -->
 ```rust,ignore
@@ -25,7 +23,7 @@ y = 3;
 x = 2;
 ```
 
-The compiler may conclude that it would be best if your program did:
+컴파일러는 여러분의 프로그램이 이렇게 되면 가장 좋을 것이라고 결론 내릴 수 있습니다:
 
 <!-- ignore: simplified code -->
 ```rust,ignore
@@ -33,52 +31,41 @@ x = 2;
 y = 3;
 ```
 
-This has inverted the order of events and completely eliminated one event.
-From a single-threaded perspective this is completely unobservable: after all
-the statements have executed we are in exactly the same state. But if our
-program is multi-threaded, we may have been relying on `x` to actually be
-assigned to 1 before `y` was assigned. We would like the compiler to be
-able to make these kinds of optimizations, because they can seriously improve
-performance. On the other hand, we'd also like to be able to depend on our
-program *doing the thing we said*.
+이것은 사건들의 순서를 거꾸로 만들고, 하나의 사건을 완전히 제거했습니다. 한 스레드의 관점에서 볼 때 이것은 완벽히 보이지 않습니다: 문장들을 모두 실행한 뒤에는 완전히 동일한 상태에 있으니까요. 
+하지만 우리의 프로그램이 여러 개의 스레드를 가진다면, 우리는 `y`가 할당되기 전에 `x`가 1이 되는 것에 의지하고 있었을 수 있습니다. 우리는 컴파일러가 이런 최적화를 해 주었으면 좋겠습니다, 성능을 매우 향상시킬 수 있거든요. 
+그렇지만, 우리는 또한 우리의 프로그램이 *우리가 말한 것을* 하도록 하기를 원합니다.
 
-## Hardware Reordering
+## 하드웨어 재배치
 
-On the other hand, even if the compiler totally understood what we wanted and
-respected our wishes, our hardware might instead get us in trouble. Trouble
-comes from CPUs in the form of memory hierarchies. There is indeed a global
-shared memory space somewhere in your hardware, but from the perspective of each
-CPU core it is *so very far away* and *so very slow*. Each CPU would rather work
-with its local cache of the data and only go through all the anguish of
-talking to shared memory only when it doesn't actually have that memory in
-cache.
+한편, 비록 컴파일러가 우리가 원하는 것을 완벽히 이해하고 우리의 뜻을 존중해 주더라도, 대신 우리의 하드웨어가 우리를 문제에 빠뜨릴 수도 있습니다. 문제는 메모리 계층의 형태로 CPU에서 옵니다. 
+여러분의 하드웨어 안 어딘가에는 분명히 전역으로 공유되는 메모리 공간이 있지만, 각 CPU 코어의 입장에서 이것은 *너무 멀고* 또한 *너무나도 느립니다*. 
+각 CPU는 차라리 데이터의 지역 캐시를 각자 가지고 작업하며 캐시에 그 정도 메모리가 없을 때에만 공유 메모리에 이야기하는 고통을 감수할 겁니다.
 
-After all, that's the whole point of the cache, right? If every read from the
-cache had to run back to shared memory to double check that it hadn't changed,
-what would the point be? The end result is that the hardware doesn't guarantee
-that events that occur in some order on *one* thread, occur in the same
-order on *another* thread. To guarantee this, we must issue special instructions
-to the CPU telling it to be a bit less smart.
+하긴 그게 캐시가 있는 이유죠, 그렇죠? 만약 캐시에서 읽는 모든 작업이 공유 메모리로 가서 캐시가 변하지 않았는지를 매번 확인해야 한다면, 캐시의 존재 이유가 뭘까요? 
+최종적으로 벌어지는 일은 *한* 스레드에서 어떤 순서로 벌어지는 사건들이 *다른* 스레드에서 같은 순서로 일어나는 것을 하드웨어가 보장하지 않는다는 것입니다. 
+이것을 보장하려면 우리는 CPU에게 좀 덜 똑똑하게 일을 하라는 특별한 명령들을 제공해야 합니다.
 
-For instance, say we convince the compiler to emit this logic:
+예를 들어, 우리가 컴파일러에게 이런 논리를 작성하게 했다고 합시다:
 
 ```text
-initial state: x = 0, y = 1
+처음 상태: x = 0, y = 1
 
-THREAD 1        THREAD 2
+스레드 1        스레드 2
 y = 3;          if x == 1 {
 x = 1;              y *= 2;
                 }
 ```
 
-Ideally this program has 2 possible final states:
+이상적으로는 이 프로그램은 2가지의 가능한 최종 상태가 있습니다:
 
-* `y = 3`: (thread 2 did the check before thread 1 completed)
-* `y = 6`: (thread 2 did the check after thread 1 completed)
+* `y = 3`: 스레드 1이 끝나기 전에 스레드 2가 상태를 확인했습니다
+* `y = 6`: 스레드 1이 끝난 후에 스레드 2가 상태를 확인했습니다
 
-However there's a third potential state that the hardware enables:
+그러나 여기 하드웨어가 가능할 수도 있게 하는 3번째의 상태가 있습니다:
 
-* `y = 2`: (thread 2 saw `x = 1`, but not `y = 3`, and then overwrote `y = 3`)
+* `y = 2`: 스레드 2는 `x = 1`을 봤지만, `y = 3`은 보지 못하고 `y = 3`을 덮어썼습니다
+
+
 
 It's worth noting that different kinds of CPU provide different guarantees. It
 is common to separate hardware into two categories: strongly-ordered and weakly-ordered.
