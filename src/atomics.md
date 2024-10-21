@@ -73,14 +73,11 @@ x = 1;              y *= 2;
 
 ## 데이터 접근
 
-The C++ memory model attempts to bridge the gap by allowing us to talk about the
-*causality* of our program. Generally, this is by establishing a *happens
-before* relationship between parts of the program and the threads that are
-running them. This gives the hardware and compiler room to optimize the program
-more aggressively where a strict happens-before relationship isn't established,
-but forces them to be more careful where one is established. The way we
-communicate these relationships are through *data accesses* and *atomic
-accesses*.
+C++ 메모리 모델은 우리의 프로그램에 *인과 관계에* 대해 이야기할 수 있게 해 줌으로써 이러한 차이를 줄이고자 시도합니다. 일반적으로 이것은 프로그램의 각 부분들과 그것을 실행하는 스레드들 간에 *선후* 관계를 맺음으로써 이루어집니다. 
+이것은 엄밀한 선후 관계가 맺어지지 않은 부분에는 하드웨어와 컴파일러가 프로그램을 더 공격적으로 최적화할 수 있도록 하지만, 엄밀하게 선후 관계가 맺어진 곳에서는 좀더 주의하도록 강제합니다. 
+우리가 이 관계들을 상호작용하는 방법은 *데이터 접근과* *원자적 접근을* 통해서입니다.
+
+
 
 Data accesses are the bread-and-butter of the programming world. They are
 fundamentally unsynchronized and compilers are free to aggressively optimize
