@@ -110,11 +110,11 @@ synchronize"
 필요한 것보다 조금 느리게 여러분의 프로그램이 돌아가는 것이 잘못 돌아가는 것보다는 당연히 낫습니다! 또한 이러한 원자적 접근을 나중에 약한 일관성으로 낮추는 것도 흔한 일입니다. 그냥 `SeqCst`를 `Relaxed`로 바꾸면 되니까요! 
 당연하게도, 그러한 변형이 *올바른지* 증명하는 것은 완전히 다른 문제입니다.
 
-## Acquire-Release
+## 획득-방출 (Acquire-Release)
 
-Acquire and Release are largely intended to be paired. Their names hint at their
-use case: they're perfectly suited for acquiring and releasing locks, and
-ensuring that critical sections don't overlap.
+획득과 방출은 짝을 짓게 의도되었습니다. 이들의 이름이 사용처에 대한 힌트를 주죠: 이들은 락의 획득과 방출, 그리고 크리티컬 섹션이 겹치지 않는 것을 보장하는 데에 완벽하게 걸맞습니다.
+
+
 
 Intuitively, an acquire access ensures that every access after it stays after
 it. However operations that occur before an acquire are free to be reordered to
