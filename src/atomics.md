@@ -98,7 +98,7 @@ C++ 메모리 모델은 우리의 프로그램에 *인과 관계에* 대해 이�
 TODO: negative reasoning vs positive reasoning? TODO: "can't forget to
 synchronize"
 
-## 순서적 일관
+## 순서적 일관 (Sequentially Consistent)
 
 순서적 일관은 가장 강력한데, 모든 다른 순서들을 제한합니다. 직관적으로, 순서적으로 일관된 작업은 재배치될 수 없습니다: 한 스레드에서 `SeqCst` 전과 후에 일어나는 접근들은 이전과 이후에 그대로 있습니다. 
 순서적으로 일관된 원자들과 데이터 접근들만 사용하는, 데이터 경합이 없는 프로그램은 프로그램의 명령들에 있어서 모든 스레드가 동의하는 하나의 전역적인 실행이 있다는 것입니다. 
@@ -106,15 +106,9 @@ synchronize"
 
 순서적 일관성이 개발자에게 비교적 친근하게 다가오는 것은 아무 대가가 없는 것이 아닙니다. 강하게 정렬된 플랫폼에서조차 순서적 일관성은 메모리 경계를 치게 만듭니다.
 
-
-
-In practice, sequential consistency is rarely necessary for program correctness.
-However sequential consistency is definitely the right choice if you're not
-confident about the other memory orders. Having your program run a bit slower
-than it needs to is certainly better than it running incorrectly! It's also
-mechanically trivial to downgrade atomic operations to have a weaker
-consistency later on. Just change `SeqCst` to `Relaxed` and you're done! Of
-course, proving that this transformation is *correct* is a whole other matter.
+실제로는 순서적 일관성은 프로그램이 올바르게 되기 위해서는 거의 필요하지 않습니다. 하지만 다른 메모리 순서에 대해 자신이 없다면 순서적 일관성은 확실히 맞는 선택입니다. 
+필요한 것보다 조금 느리게 여러분의 프로그램이 돌아가는 것이 잘못 돌아가는 것보다는 당연히 낫습니다! 또한 이러한 원자적 접근을 나중에 약한 일관성으로 낮추는 것도 흔한 일입니다. 그냥 `SeqCst`를 `Relaxed`로 바꾸면 되니까요! 
+당연하게도, 그러한 변형이 *올바른지* 증명하는 것은 완전히 다른 문제입니다.
 
 ## Acquire-Release
 
