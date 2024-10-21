@@ -77,40 +77,28 @@ C++ 메모리 모델은 우리의 프로그램에 *인과 관계에* 대해 이�
 이것은 엄밀한 선후 관계가 맺어지지 않은 부분에는 하드웨어와 컴파일러가 프로그램을 더 공격적으로 최적화할 수 있도록 하지만, 엄밀하게 선후 관계가 맺어진 곳에서는 좀더 주의하도록 강제합니다. 
 우리가 이 관계들을 상호작용하는 방법은 *데이터 접근과* *원자적 접근을* 통해서입니다.
 
+데이터 접근은 프로그래밍 세계의 기본 도구입니다. 이것은 기본적으로 동기화되지 않고, 컴파일러들은 이들을 공격적으로 최적화할 수 있습니다. 
+좀더 자세하게 말하자면, 프로그램이 한 스레드만 사용한다는 가정 하에 데이터 접근은 컴파일러에 의해 순서가 재배치될 수 있습니다. 
+하드웨어 또한 데이터 접근에서 일어난 변화를 다른 스레드들로 전파하는 것을 원하는 만큼 게으르고 일관성 없게 할 수 있습니다. 가장 중요하게도, 데이터 접근은 데이터 경합이 일어나는 방식입니다. 
+데이터 접근은 하드웨어와 컴파일러에 매우 우호적이지만, 우리가 봤듯이 이것을 가지고 동기화된 코드를 짜려고 할 때 *끔찍한* 의미를 제공합니다.
 
+**데이터 접근만을 가지고 올바른 동기화 코드를 작성하기는 말 그대로 불가능합니다.**
 
-Data accesses are the bread-and-butter of the programming world. They are
-fundamentally unsynchronized and compilers are free to aggressively optimize
-them. In particular, data accesses are free to be reordered by the compiler on
-the assumption that the program is single-threaded. The hardware is also free to
-propagate the changes made in data accesses to other threads as lazily and
-inconsistently as it wants. Most critically, data accesses are how data races
-happen. Data accesses are very friendly to the hardware and compiler, but as
-we've seen they offer *awful* semantics to try to write synchronized code with.
-Actually, that's too weak.
+원자적 접근은 우리가 하드웨어와 컴파일러에게 우리의 프로그램이 여러 개의 스레드를 가진다고 말하는 방법입니다. 각각의 원자적 접근은 다른 접근들과 어떤 관계를 형성하는지를 특정하는 *순서로* 표시될 수 있습니다. 
+실제로는 이것은 컴파일러와 하드웨어에게 할 *수 없는* 몇 가지를 말해주는 것입니다. 컴파일러에게는 이것이 명령들의 재배치에 관한 것이 대부분이고, 하드웨어에게는 쓰기 작업이 다른 스레드들로 전파되는 것에 관한 것입니다. 
+러스트가 제공하는 순서들은 다음과 같습니다:
 
-**It is literally impossible to write correct synchronized code using only data
-accesses.**
-
-Atomic accesses are how we tell the hardware and compiler that our program is
-multi-threaded. Each atomic access can be marked with an *ordering* that
-specifies what kind of relationship it establishes with other accesses. In
-practice, this boils down to telling the compiler and hardware certain things
-they *can't* do. For the compiler, this largely revolves around re-ordering of
-instructions. For the hardware, this largely revolves around how writes are
-propagated to other threads. The set of orderings Rust exposes are:
-
-* Sequentially Consistent (SeqCst)
+* 순서적 일관 (SeqCst)
 * Release
 * Acquire
 * Relaxed
 
-(Note: We explicitly do not expose the C++ *consume* ordering)
+(주의: 우리는 C++의 *consume* 순서를 의도적으로 제공하지 않습니다)
 
 TODO: negative reasoning vs positive reasoning? TODO: "can't forget to
 synchronize"
 
-## Sequentially Consistent
+## 순서적 일관
 
 Sequentially Consistent is the most powerful of all, implying the restrictions
 of all other orderings. Intuitively, a sequentially consistent operation
