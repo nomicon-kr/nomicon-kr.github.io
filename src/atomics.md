@@ -37,7 +37,7 @@ y = 3;
 
 ## 하드웨어 재배치
 
-한편, 비록 컴파일러가 우리가 원하는 것을 완벽히 이해하고 우리의 뜻을 존중해 주더라도, 대신 우리의 하드웨어가 우리를 문제에 빠뜨릴 수도 있습니다. 문제는 메모리 계층의 형태로 CPU에서 옵니다. 
+한편, 비록 컴파일러가 우리가 원하는 것을 완벽히 이해하고 우리의 뜻을 존중해 주더라도, 대신 우리의 하드웨어가 우리를 문제에 빠뜨릴 수도 있습니다. 문제는 CPU 메모리 계층에 있습니다. 
 여러분의 하드웨어 안 어딘가에는 분명히 전역으로 공유되는 메모리 공간이 있지만, 각 CPU 코어의 입장에서 이것은 *너무 멀고* 또한 *너무나도 느립니다*. 
 각 CPU는 차라리 데이터의 지역 캐시를 각자 가지고 작업하며 캐시에 그 정도 메모리가 없을 때에만 공유 메모리에 이야기하는 고통을 감수할 겁니다.
 
@@ -65,13 +65,10 @@ x = 1;              y *= 2;
 
 * `y = 2`: 스레드 2는 `x = 1`을 봤지만, `y = 3`은 보지 못하고 `y = 3`을 덮어썼습니다
 
-다른 종류의 CPU는 다른 보장들을 제공한다는 것은 한번 짚고 넘어가겠습니다. 하드웨어를 두 개의 종류로 구분하는 것은 흔한 일입니다: 강하게 정렬된 것과 약하게 정렬된 것들이죠.
+다른 종류의 CPU는 다른 보장들을 제공한다는 것은 한번 짚고 넘어가겠습니다. 하드웨어를 두 개의 종류로 구분하는 것은 흔한 일입니다: 강하게 정렬된 것과 약하게 정렬된 것들이죠. 
+가장 유명하기로는 x86/64 는 강하게 순서를 보장하지만, ARM은 순서의 보장이 약합니다. 이것은 동시 프로그래밍에 있어 두 가지 결과를 가져옵니다:
 
-It's worth noting that different kinds of CPU provide different guarantees. It
-is common to separate hardware into two categories: strongly-ordered and weakly-ordered.
-Most notably x86/64 provides strong ordering guarantees, while ARM
-provides weak ordering guarantees. This has two consequences for concurrent
-programming:
+
 
 * Asking for stronger guarantees on strongly-ordered hardware may be cheap or
   even free because they already provide strong guarantees unconditionally.
