@@ -112,26 +112,16 @@ synchronize"
 
 ## 획득-방출 (Acquire-Release)
 
-획득과 방출은 짝을 짓게 의도되었습니다. 이들의 이름이 사용처에 대한 힌트를 주죠: 이들은 락의 획득과 방출, 그리고 크리티컬 섹션이 겹치지 않는 것을 보장하는 데에 완벽하게 걸맞습니다.
+획득과 방출은 짝을 짓게 의도되었습니다. 이들의 이름이 사용처에 대한 힌트를 주죠: 이들은 락의 획득과 방출, 그리고 임계 영역(Critical Section)이 겹치지 않는 것을 보장하는 데에 완벽하게 걸맞습니다.
 
+직관적으로, 획득 접근은 이 다음의 모든 접근이 이 뒤에 계속 있는 것을 보장합니다. 하지만 획득 전에 발생하는 작업들은 획득 후에 발생하도록 재배치될 수 있습니다. 
+비슷하게, 방출 접근은 이 전의 모든 접근이 이전에 계속 있게 합니다. 하지만 방출 뒤에 일어나는 작업들은 장출 전에 일어나도록 재배치되어도 상관 없습니다.
 
+스레드 A가 메모리의 한 위치를 방출하고 스레드 B가 이어서 *그 똑같은* 위치를 획득한다면, 인과관계가 성립합니다. 
+A의 방출 전에 일어난 모든 쓰기 작업은 (비원자적인 쓰기 작업과 관대한 원자적 쓰기 작업을 포함해서) B의 획득 이후 관측될 것입니다. 하지만 다른 스레드들과는 어떤 인과관계도 성립하지 않습니다. 
+마찬가지로, 만약 A와 B가 메모리의 *다른* 위치에 접근한다면 그 어떤 인과관계도 성립하지 않습니다.
 
-Intuitively, an acquire access ensures that every access after it stays after
-it. However operations that occur before an acquire are free to be reordered to
-occur after it. Similarly, a release access ensures that every access before it
-stays before it. However operations that occur after a release are free to be
-reordered to occur before it.
-
-When thread A releases a location in memory and then thread B subsequently
-acquires *the same* location in memory, causality is established. Every write
-(including non-atomic and relaxed atomic writes) that happened before A's
-release will be observed by B after its acquisition. However no causality is
-established with any other threads. Similarly, no causality is established
-if A and B access *different* locations in memory.
-
-Basic use of release-acquire is therefore simple: you acquire a location of
-memory to begin the critical section, and then release that location to end it.
-For instance, a simple spinlock might look like:
+따라서 방출-획득의 기본 사용법은 간단합니다: 임계 영역을 시작하기 위해 메모리의 어떤 위치를 획득하고, 그 다음 임계 영역을 끝내기 위해 그 위치를 방출하는 것입니다. 예를 들어, 간단한 spinlock은 이렇게 될 겁니다:
 
 ```rust
 use std::sync::Arc;
