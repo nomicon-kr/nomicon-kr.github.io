@@ -89,9 +89,9 @@ C++ 메모리 모델은 우리의 프로그램에 *인과 관계에* 대해 이�
 러스트가 제공하는 순서들은 다음과 같습니다:
 
 * 순서적 일관 (SeqCst)
-* Release
-* Acquire
-* Relaxed
+* 방출
+* 획득
+* 관대
 
 (주의: 우리는 C++의 *consume* 순서를 의도적으로 제공하지 않습니다)
 
@@ -100,19 +100,13 @@ synchronize"
 
 ## 순서적 일관
 
-Sequentially Consistent is the most powerful of all, implying the restrictions
-of all other orderings. Intuitively, a sequentially consistent operation
-cannot be reordered: all accesses on one thread that happen before and after a
-SeqCst access stay before and after it. A data-race-free program that uses
-only sequentially consistent atomics and data accesses has the very nice
-property that there is a single global execution of the program's instructions
-that all threads agree on. This execution is also particularly nice to reason
-about: it's just an interleaving of each thread's individual executions. This
-does not hold if you start using the weaker atomic orderings.
+순서적 일관은 가장 강력한데, 모든 다른 순서들을 제한합니다. 직관적으로, 순서적으로 일관된 작업은 재배치될 수 없습니다: 한 스레드에서 `SeqCst` 전과 후에 일어나는 접근들은 이전과 이후에 그대로 있습니다. 
+순서적으로 일관된 원자들과 데이터 접근들만 사용하는, 데이터 경합이 없는 프로그램은 프로그램의 명령들에 있어서 모든 스레드가 동의하는 하나의 전역적인 실행이 있다는 것입니다. 
+이 실행은 또한 이해하기에 특별히 좋습니다: 그냥 각 스레드의 독립적인 실행들의 조합일 뿐이니까요. 만약 여러분이 좀더 약한 원자적 순서 배치를 사용한다면 이것은 성립하지 않습니다.
 
-The relative developer-friendliness of sequential consistency doesn't come for
-free. Even on strongly-ordered platforms sequential consistency involves
-emitting memory fences.
+순서적 일관성이 개발자에게 비교적 친근하게 다가오는 것은 아무 대가가 없는 것이 아닙니다. 강하게 정렬된 플랫폼에서조차 순서적 일관성은 메모리 경계를 치게 만듭니다.
+
+
 
 In practice, sequential consistency is rarely necessary for program correctness.
 However sequential consistency is definitely the right choice if you're not
