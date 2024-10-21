@@ -68,18 +68,10 @@ x = 1;              y *= 2;
 다른 종류의 CPU는 다른 보장들을 제공한다는 것은 한번 짚고 넘어가겠습니다. 하드웨어를 두 개의 종류로 구분하는 것은 흔한 일입니다: 강하게 정렬된 것과 약하게 정렬된 것들이죠. 
 가장 유명하기로는 x86/64 는 강하게 순서를 보장하지만, ARM은 순서의 보장이 약합니다. 이것은 동시 프로그래밍에 있어 두 가지 결과를 가져옵니다:
 
+* 강하게 정렬된 하드웨어에서 더 강한 보장을 요구하는 것은 비용이 적거나 심지어 없습니다, 이미 무조건적으로 강한 보장을 하기 때문이죠. 약하게 정렬된 하드웨어에서 약한 보장을 요구하면 성능상의 이득만 주어질 겁니다.
+* 강하게 정렬된 하드웨어에서 너무 약한 보장을 요구하면, 여러분의 프로그램이 엄밀하게는 틀렸더라도, 잘 작동하게 *될* 겁니다. 가능하다면 동시적인 알고리즘은 약하게 정렬된 하드웨어에서 테스트해야 합니다.
 
-
-* Asking for stronger guarantees on strongly-ordered hardware may be cheap or
-  even free because they already provide strong guarantees unconditionally.
-  Weaker guarantees may only yield performance wins on weakly-ordered hardware.
-
-* Asking for guarantees that are too weak on strongly-ordered hardware is
-  more likely to *happen* to work, even though your program is strictly
-  incorrect. If possible, concurrent algorithms should be tested on
-  weakly-ordered hardware.
-
-## Data Accesses
+## 데이터 접근
 
 The C++ memory model attempts to bridge the gap by allowing us to talk about the
 *causality* of our program. Generally, this is by establishing a *happens
