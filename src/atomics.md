@@ -121,7 +121,7 @@ synchronize"
 A의 방출 전에 일어난 모든 쓰기 작업은 (비원자적인 쓰기 작업과 관대한 원자적 쓰기 작업을 포함해서) B의 획득 이후 관측될 것입니다. 하지만 다른 스레드들과는 어떤 인과관계도 성립하지 않습니다. 
 마찬가지로, 만약 A와 B가 메모리의 *다른* 위치에 접근한다면 그 어떤 인과관계도 성립하지 않습니다.
 
-따라서 방출-획득의 기본 사용법은 간단합니다: 임계 영역을 시작하기 위해 메모리의 어떤 위치를 획득하고, 그 다음 임계 영역을 끝내기 위해 그 위치를 방출하는 것입니다. 예를 들어, 간단한 spinlock은 이렇게 될 겁니다:
+따라서 방출-획득의 기본 사용법은 간단합니다: 임계 영역을 시작하기 위해 메모리의 어떤 위치를 획득하고, 그 다음 임계 영역을 끝내기 위해 그 위치를 방출하는 것입니다. 예를 들어, 간단한 스핀락(Spinlock)은 이렇게 될 겁니다:
 
 ```rust
 use std::sync::Arc;
@@ -129,39 +129,30 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 
 fn main() {
-    let lock = Arc::new(AtomicBool::new(false)); // value answers "am I locked?"
+    let lock = Arc::new(AtomicBool::new(false)); // 이 값은 현재 락이 걸렸는지 여부입니다
 
-    // ... distribute lock to threads somehow ...
+    // ... 어떻게 락을 스레드들에 배포합니다 ...
 
-    // Try to acquire the lock by setting it to true
+    // 이 변수를 true로 설정함으로써 락을 획득하려 시도합니다
     while lock.compare_and_swap(false, true, Ordering::Acquire) { }
-    // broke out of the loop, so we successfully acquired the lock!
+    // 반복문에서 나왔으니 성공적으로 락을 획득했습니다!
 
-    // ... scary data accesses ...
+    // ... 무서운 데이터 접근들 ...
 
-    // ok we're done, release the lock
+    // 끝났습니다, 락을 방출합니다
     lock.store(false, Ordering::Release);
 }
 ```
 
-On strongly-ordered platforms most accesses have release or acquire semantics,
-making release and acquire often totally free. This is not the case on
-weakly-ordered platforms.
+강하게 정렬된 플랫폼에서 대부분의 접근은 방출이나 획득의 의미를 지니는데, 따라서 방출과 획득 작업의 비용이 거의 없습니다. 약하게 정렬된 플랫폼에서는 이렇지가 않습니다.
 
-## Relaxed
+## 관대 (Relaxed)
 
-Relaxed accesses are the absolute weakest. They can be freely re-ordered and
-provide no happens-before relationship. Still, relaxed operations are still
-atomic. That is, they don't count as data accesses and any read-modify-write
-operations done to them occur atomically. Relaxed operations are appropriate for
-things that you definitely want to happen, but don't particularly otherwise care
-about. For instance, incrementing a counter can be safely done by multiple
-threads using a relaxed `fetch_add` if you're not using the counter to
-synchronize any other accesses.
+관대한 접근은 절대적으로 최약입니다. 이들은 자유롭게 재배치될 수 있고, 그 어떤 선후관계도 제공하지 않습니다. 하지만, 관대한 작업들은 원자적입니다. 
+이 말은, 이들이 데이터 접근으로 취급되지 않고, 이들에 대한 어떤 읽기-수정-쓰기 작업들은 원자적으로 일어난다는 뜻입니다. 관대한 작업들은 여러분이 반드시 일어나게 하고는 싶지만, 그 외에는 특별히 신경쓰지는 않는 것들에 적합합니다. 
+예를 들어, 만약 어떤 카운터를 다른 접근들에 동기화하는 목적으로 사용하는 것이 아니라면, 그 카운터를 증가시키는 것은 관대한 `fetch_add`를 사용해서 여러 스레드에서 안전하게 실행될 겁니다.
 
-There's rarely a benefit in making an operation relaxed on strongly-ordered
-platforms, since they usually provide release-acquire semantics anyway. However
-relaxed operations can be cheaper on weakly-ordered platforms.
+강하게 정렬된 플랫폼에서 작업을 관대하게 만드는 것은 별 이득이 없는데, 이 플랫폼은 어차피 보통은 방출-획득의 의미를 제공하기 때문입니다. 하지만 관대한 작업들은 약하게 정렬된 플랫폼에서 더 비용이 적을 수 있습니다.
 
 [C11-busted]: http://plv.mpi-sws.org/c11comp/popl15.pdf
 [C++-model]: https://en.cppreference.com/w/cpp/atomic/memory_order
