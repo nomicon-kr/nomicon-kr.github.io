@@ -91,6 +91,9 @@ struct Boxy<T> {
 ```
 
 그 자체로 `Drop`을 구현하지 않더라도, `data1`과 `data2`의 필드들이 해제될 "것 같을 때" 그 소멸자를 호출할 것입니다. 우리는 이런 타입이 *`Drop`이 필요하다고* 합니다, 그 자체로는 `Drop`이 아니더라도요.
+will have the destructors of its `data1` and `data2` fields called whenever it "would" be
+dropped, even though it itself doesn't implement Drop. We say that such a type
+*needs Drop*, even though it is not itself Drop.
 
 마찬가지로,
 
@@ -149,5 +152,15 @@ fn main() {}
 하지만 이렇게 할 때 그 필드에 다른 임의의 잘못된 상태를 만드는 것은 막지 못합니다.
 
 득과 실을 비교했을 때 이것은 괜찮은 선택입니다. 분명히 기본적으로 해야 하는 방법이죠. 하지만 미래에는 필드가 자동으로 해제되면 안된다고 말하는, 공식적인 방법이 있기를 바랍니다.
+However this has fairly odd semantics: you are saying that a field that *should*
+always be Some *may* be None, just because of what happens in the destructor. Of
+course this conversely makes a lot of sense: you can call arbitrary methods on
+self during the destructor, and this should prevent you from ever doing so after
+deinitializing the field. Not that it will prevent you from producing any other
+arbitrarily invalid state in there.
+
+On balance this is an ok choice. Certainly what you should reach for by default.
+However, in the future we expect there to be a first-class way to announce that
+a field shouldn't be automatically dropped.
 
 [Unique]: phantom-data.html

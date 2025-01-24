@@ -2,6 +2,15 @@
 
 안전한 러스트는 다음과 같이 정의된 데이터 경합이 발생하지 않는 것을 보장합니다:
 
+* two or more threads concurrently accessing a location of memory
+* one or more of them is a write
+* one or more of them is unsynchronized
+
+A data race has Undefined Behavior, and is therefore impossible to perform in
+Safe Rust. Data races are prevented *mostly* through Rust's ownership system alone:
+it's impossible to alias a mutable reference, so it's impossible to perform a
+data race. Interior mutability makes this more complicated, which is largely why
+we have the Send and Sync traits (see the next section for more on this).
 * 2개 이상의 스레드들이 메모리의 한 곳을 동시적으로 접근하고
 * 그 중 1개 이상이 쓰기 작업을 하며
 * 그 중 1개 이상이 동기화되지 않은
@@ -49,6 +58,8 @@ println!("{}", data[idx.load(Ordering::SeqCst)]);
 ```
 
 이 코드 대신 우리가 경계 검사를 직접 하고, 데이터를 검사받지 않은 값으로 불안전하게 접근하면 데이터 경합을 일으킬 수 있습니다:
+We can cause a race condition to violate memory safety if we instead do the bound
+check in advance, and then unsafely access the data with an unchecked value:
 
 ```rust,no_run
 use std::thread;
