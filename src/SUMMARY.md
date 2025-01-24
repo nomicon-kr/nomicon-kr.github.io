@@ -44,7 +44,7 @@
   * [원자들](atomics.md)
 * [Vec 구현하기](./vec/vec.md)
   * [구획도](./vec/vec-layout.md)
-  * [Allocating](./vec/vec-alloc.md)
+  * [할당하기](./vec/vec-alloc.md)
   * [Push and Pop](./vec/vec-push-pop.md)
   * [Deallocating](./vec/vec-dealloc.md)
   * [Deref](./vec/vec-deref.md)
