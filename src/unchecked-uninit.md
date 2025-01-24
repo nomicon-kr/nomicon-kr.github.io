@@ -81,14 +81,7 @@ dbg!(x);
 주의할 것은, `ptr` 메서드들을 사용하려면 우선 초기화하고 싶은 데이터의 *생 포인터를* 얻어내야 합니다. 초기화되지 않은 데이터에 *레퍼런스를* 만드는 것은 불법이고, 따라서 생 포인터를 얻을 때는 주의해야 합니다:
 
 * `T`의 배열에 있어서는, 배열의 인덱스 `idx`번째를 계산할 때는 `base_ptr: *mut T`일 때 `base_ptr.add(idx)`를 사용하면 됩니다. 이것은 메모리에 배열이 어떻게 배치되는지를 이용합니다.
-* 하지만 구조체의 경우, 일반적으로 우리는 어떻게 배치되어 있는지 알지 못합니다. 또한 우리는 `&mut base_ptr.field`를 사용할 수 없는데, 레퍼런스를 만드는 행위이기 때문입니다. 따라서, [`addr_of_mut`] 매크로를 조심스럽게 사용해야 합니다. 이것은 중간의 레퍼런스를 만들지 않고 바로 구조체의 필드를 가리키는 생 포인터를 만들어 냅니다:
-* For an array of `T`, you can use `base_ptr.add(idx)` where `base_ptr: *mut T`
-to compute the address of array index `idx`. This relies on
-how arrays are laid out in memory.
-* For a struct, however, in general we do not know how it is laid out, and we
-also cannot use `&mut base_ptr.field` as that would be creating a
-reference. So, you must carefully use the [raw reference][raw_reference] syntax. This creates
-a raw pointer to the field without creating an intermediate reference:
+* 하지만 구조체의 경우, 일반적으로 우리는 어떻게 배치되어 있는지 알지 못합니다. 또한 우리는 `&mut base_ptr.field`를 사용할 수 없는데, 레퍼런스를 만드는 행위이기 때문입니다. 따라서, [생 레퍼런스][raw_reference] 문법을 조심스럽게 사용해야 합니다. 이것은 중간의 레퍼런스를 만들지 않고 바로 구조체의 필드를 가리키는 생 포인터를 만들어 냅니다:
 
 ```rust
 use std::{ptr, mem::MaybeUninit};
@@ -100,9 +93,6 @@ struct Demo {
 let mut uninit = MaybeUninit::<Demo>::uninit();
 // `&uninit.as_mut().field` 는 초기화되지 않은 `bool`에 레퍼런스를 만들어낼 겁니다,
 // 따라서 **미정의 동작이** 일어납니다!
-let f1_ptr = unsafe { ptr::addr_of_mut!((*uninit.as_mut_ptr()).field) };
-// `&uninit.as_mut().field` would create a reference to an uninitialized `bool`,
-// and thus be Undefined Behavior!
 let f1_ptr = unsafe { &raw mut (*uninit.as_mut_ptr()).field };
 unsafe { f1_ptr.write(true); }
 
@@ -122,10 +112,4 @@ let init = unsafe { uninit.assume_init() };
 [`write`]: https://doc.rust-lang.org/core/ptr/fn.write.html
 [`copy`]: https://doc.rust-lang.org/std/ptr/fn.copy.html
 [`copy_nonoverlapping`]: https://doc.rust-lang.org/std/ptr/fn.copy_nonoverlapping.html
-[`MaybeUninit`]: ../core/mem/union.MaybeUninit.html
-[assume_init]: ../core/mem/union.MaybeUninit.html#method.assume_init
-[`ptr`]: ../core/ptr/index.html
-[raw_reference]: ../reference/types/pointer.html#r-type.pointer.raw.constructor
-[`write`]: ../core/ptr/fn.write.html
-[`copy`]: ../std/ptr/fn.copy.html
-[`copy_nonoverlapping`]: ../std/ptr/fn.copy_nonoverlapping.html
+[raw_reference]: https://doc.rust-lang.org/reference/types/pointer.html#r-type.pointer.raw.constructor
