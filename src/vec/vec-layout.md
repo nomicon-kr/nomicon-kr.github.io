@@ -21,19 +21,12 @@ pub struct Vec<T> {
 다시 정리하면, `Unique`는 생 포인터를 감싸면서 다음의 특성들을 추가합니다:
 
 * `T`에 대해서 공변하고
-* `T` 타입의 값을 소유할 수 있고 ()
+* `T` 타입의 값을 소유할 수도 있고 (이것은 우리의 예제와는 관련이 없지만, 실제 `std::vec::Vec<T>`가 이것을 필요로 하는 이유는 [`PhantomData`에 관한 챕터를][phantom-data] 보세요)
+* `T`가 `Send`/`Sync`하다면 역시 `Send`/`Sync`하고
+* 이 포인터는 절대 널이 아닙니다 (따라서 `Option<Vec<T>>`는 널 포인터 최적화가 됩니다)
 
-* We are covariant over `T`
-* We may own a value of type `T` (this is not relevant for our example here, but see 
-  [the chapter on PhantomData][phantom-data] on why the real `std::vec::Vec<T>` needs this)
-* We are Send/Sync if `T` is Send/Sync
-* Our pointer is never null (so `Option<Vec<T>>` is null-pointer-optimized)
-
-We can implement all of the above requirements in stable Rust. To do this, instead
-of using `Unique<T>` we will use [`NonNull<T>`][NonNull], another wrapper around a
-raw pointer, which gives us two of the above properties, namely it is covariant
-over `T` and is declared to never be null. By implementing Send/Sync if `T` is,
-we get the same results as using `Unique<T>`:
+우리는 위의 모든 요구사항들을 안정적인 러스트 버전에서 구현할 수 있습니다. 이것을 하기 위해, 우리는 `Unique<T>` 대신 [`NonNull<T>`를][NonNull] 사용할 겁니다. 이것은 생 포인터를 감싸는 또다른 구조체인데, 
+위의 것들 중 두 가지 특성, 즉 `T`에 대해 공변하는 것과 절대 널이 아니라는 특성을 가집니다. `T`가 `Send`/`Sync`일 때 역시 `Send`/`Sync`하도록 구현하면, 우리는 `Unique<T>`를 사용하는 것과 같은 결과를 얻게 됩니다:
 
 ```rust
 use std::ptr::NonNull;
@@ -51,4 +44,4 @@ unsafe impl<T: Sync> Sync for Vec<T> {}
 
 [ownership]: ../ownership.html
 [phantom-data]: ../phantom-data.md
-[NonNull]: ../../std/ptr/struct.NonNull.html
+[NonNull]: https://doc.rust-lang.org/std/ptr/struct.NonNull.html
