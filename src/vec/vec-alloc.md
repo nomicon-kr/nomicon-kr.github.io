@@ -1,4 +1,4 @@
-# Allocating Memory
+# 메모리 할당하기
 
 Using `NonNull` throws a wrench in an important feature of Vec (and indeed all of
 the std collections): creating an empty Vec doesn't actually allocate at all. This
