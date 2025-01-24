@@ -42,7 +42,7 @@
   * [경합](races.md)
   * [Send와 Sync](send-and-sync.md)
   * [원자들](atomics.md)
-* [Implementing Vec](./vec/vec.md)
+* [Vec 구현하기](./vec/vec.md)
   * [Layout](./vec/vec-layout.md)
   * [Allocating](./vec/vec-alloc.md)
   * [Push and Pop](./vec/vec-push-pop.md)
