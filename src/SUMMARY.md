@@ -43,7 +43,7 @@
   * [Send와 Sync](send-and-sync.md)
   * [원자들](atomics.md)
 * [Vec 구현하기](./vec/vec.md)
-  * [Layout](./vec/vec-layout.md)
+  * [구획도](./vec/vec-layout.md)
   * [Allocating](./vec/vec-alloc.md)
   * [Push and Pop](./vec/vec-push-pop.md)
   * [Deallocating](./vec/vec-dealloc.md)
