@@ -2,7 +2,7 @@
 
 `NonNull`을 사용하는 것은 `Vec`(과 모든 표준 컬렉션들)의 중요한 동작에 걸림돌이 됩니다: 비어있는 `Vec`을 생성하면 실제로는 아무것도 할당하지 않아야 한다는 것입니다. 이것은 크기가 0인 메모리를 할당하는 것과는 다릅니다, 전역 할당자에게는 크기가 0인 메모리를 할당하는 것은 용납되지 않거든요 (이렇게 하면 미정의 동작이 일어납니다!). 따라서 우리가 할당할 수도 없고, `ptr`에 널 포인터를 넣을 수도 없다면, `Vec::new`에서는 어떻게 하죠? 음, 그냥 아무 쓰레기 값이나 집어넣죠!
 
-이렇게 해도 할당이 없을 때 `cap == 0`을 먼저 확인하도록 할 것이기 때문에 전혀 문제가 없습니다. 심지어 우리는 이 경우를 특별히 처리할 필요도 거의 없는데, 어차피 보통 우리는 `cap > len`이나 `len > 0`을 확인할 필요가 있기 때문입니다. 여기에 들어가기에 추천되는 러스트 값은 `mem::align_of::<T>()`입니다. `NonNull`에서는 이것을 위한 편리 함수를 제공합니다: `NonNull::dangling()`입니다. 우리는 꽤 많은 곳에서 `dangling`을 사용할 텐데, 실제 할당은 없지만 `null`은 컴파일러가 나쁜 짓을 하도록 만들 것이기 때문입니다.
+할당이 없을 때 `cap == 0`을 먼저 확인하도록 할 것이기 때문에 이렇게 해도 전혀 문제가 없습니다. 심지어 우리는 이 경우를 특별히 처리할 필요도 거의 없는데, 어차피 보통 우리는 `cap > len`이나 `len > 0`을 확인해야 하기 때문입니다. 여기에 들어가기에 추천되는 러스트 값은 `mem::align_of::<T>()`입니다. `NonNull`에서는 이것을 위한 편리 함수를 제공합니다: `NonNull::dangling()`입니다. 우리는 꽤 많은 곳에서 `dangling`을 사용할 텐데, 실제 할당은 없지만 `null`은 컴파일러가 나쁜 짓을 하도록 만들 것이기 때문입니다.
 
 그래서:
 
@@ -12,7 +12,7 @@ use std::mem;
 
 impl<T> Vec<T> {
     pub fn new() -> Self {
-        assert!(mem::size_of::<T>() != 0, "우리는 아직 영량 타입을 처리할 준비가 되지 않았습니다!");
+        assert!(mem::size_of::<T>() != 0, "아직 영량 타입을 처리할 준비가 되지 않았습니다!");
         Vec {
             ptr: NonNull::dangling(),
             len: 0,
@@ -28,25 +28,11 @@ impl<T> Vec<T> {
 다음으로 우리는 *실제로* 공간을 원할 때 무엇을 해야 할지를 고민해야 합니다. 이것을 위해서 우리는 안정적인 러스트의 [`std::alloc`에][std_alloc] 있는 전역 할당 함수 [`alloc`][alloc], [`realloc`][realloc],
 그리고 [`dealloc`을][dealloc] 사용합니다. 이 함수들은 나중에 [`std::alloc::Global`][Global] 타입이 표준화되고 나면 구식으로 취급될 겁니다.
 
+우리는 또한 메모리 소진 상황(out-of-memory, OOM)도 처리해야 합니다. 표준 라이브러리는 [`alloc::handle_alloc_error`][handle_alloc_error] 함수를 제공하는데, 이 함수는 플랫폼마다 다른 방식으로 프로그램을 강제 종료합니다. 우리가 `panic!`하지 않고 강제 종료하는 이유는 되감기 작업에서 할당이 일어날 수 있는데, 할당자가 "앗, 메모리가 더 이상 없습니다"라고 말하며 돌아왔는데 할당이 일어나는 것은 나쁜 일 같기 때문입니다.
 
+물론, 대부분의 플랫폼은 일반적인 상황에서는 메모리가 소진되는 일이 없기 때문에, 이렇게 처리하는 것은 좀 바보같아 보입니다. 여러분이 실제로 모든 메모리를 다 사용하기 시작할 때 여러분의 운영 체제는 아마 다른 수단을 동원해서 그 프로그램을 종료시킬 겁니다. 우리가 OOM을 초래할 가장 가능성 있는 방법은 터무니없을 정도로 많은 양의 메모리를 한번에 요청하는 것입니다 (예: 이론적인 주소 공간의 절반). 따라서 *아마도* `panic!`해도 괜찮고, 나쁜 일은 일어나지 않을 겁니다. 그래도 우리는 최대한 표준 라이브러리와 같이 되도록 노력하는 것이기 때문에, 우리는 그냥 전체 프로그램을 강제 종료할 겁니다.
 
-We'll also need a way to handle out-of-memory (OOM) conditions. The standard
-library provides a function [`alloc::handle_alloc_error`][handle_alloc_error],
-which will abort the program in a platform-specific manner.
-The reason we abort and don't panic is because unwinding can cause allocations
-to happen, and that seems like a bad thing to do when your allocator just came
-back with "hey I don't have any more memory".
-
-Of course, this is a bit silly since most platforms don't actually run out of
-memory in a conventional way. Your operating system will probably kill the
-application by another means if you legitimately start using up all the memory.
-The most likely way we'll trigger OOM is by just asking for ludicrous quantities
-of memory at once (e.g. half the theoretical address space). As such it's
-*probably* fine to panic and nothing bad will happen. Still, we're trying to be
-like the standard library as much as possible, so we'll just kill the whole
-program.
-
-Okay, now we can write growing. Roughly, we want to have this logic:
+좋습니다, 이제 우리는 성장하는 논리를 작성할 수 있겠군요, 대략적으로 우리는 이런 논리를 원합니다:
 
 ```text
 if cap == 0:
