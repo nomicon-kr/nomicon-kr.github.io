@@ -23,15 +23,12 @@ impl<T> Vec<T> {
 # fn main() {}
 ```
 
-I slipped in that assert there because zero-sized types will require some
-special handling throughout our code, and I want to defer the issue for now.
-Without this assert, some of our early drafts will do some Very Bad Things.
+저 코드에 `assert` 문이 들어가 있는데, 영량 타입은 우리의 코드에서 전반적으로 특별한 처리가 필요하고, 그 문제를 지금은 보류하고 싶기 때문입니다. 이 `assert` 문이 없으면, 우리의 초기 코드는 **매우 나쁜 짓을** 할 겁니다.
 
-Next we need to figure out what to actually do when we *do* want space. For that,
-we use the global allocation functions [`alloc`][alloc], [`realloc`][realloc],
-and [`dealloc`][dealloc] which are available in stable Rust in
-[`std::alloc`][std_alloc]. These functions are expected to become deprecated in
-favor of the methods of [`std::alloc::Global`][Global] after this type is stabilized.
+다음으로 우리는 *실제로* 공간을 원할 때 무엇을 해야 할지를 고민해야 합니다. 이것을 위해서 우리는 안정적인 러스트의 [`std::alloc`에][std_alloc] 있는 전역 할당 함수 [`alloc`][alloc], [`realloc`][realloc],
+그리고 [`dealloc`을][dealloc] 사용합니다. 이 함수들은 나중에 [`std::alloc::Global`][Global] 타입이 표준화되고 나면 구식으로 취급될 겁니다.
+
+
 
 We'll also need a way to handle out-of-memory (OOM) conditions. The standard
 library provides a function [`alloc::handle_alloc_error`][handle_alloc_error],
