@@ -1,21 +1,10 @@
 # 메모리 할당하기
 
-Using `NonNull` throws a wrench in an important feature of Vec (and indeed all of
-the std collections): creating an empty Vec doesn't actually allocate at all. This
-is not the same as allocating a zero-sized memory block, which is not allowed by
-the global allocator (it results in undefined behavior!). So if we can't allocate,
-but also can't put a null pointer in `ptr`, what do we do in `Vec::new`? Well, we
-just put some other garbage in there!
+`NonNull`을 사용하는 것은 `Vec`(과 모든 표준 컬렉션들)의 중요한 동작에 걸림돌이 됩니다: 비어있는 `Vec`을 생성하면 실제로는 아무것도 할당하지 않아야 한다는 것입니다. 이것은 크기가 0인 메모리를 할당하는 것과는 다릅니다, 전역 할당자에게는 크기가 0인 메모리를 할당하는 것은 용납되지 않거든요 (이렇게 하면 미정의 동작이 일어납니다!). 따라서 우리가 할당할 수도 없고, `ptr`에 널 포인터를 넣을 수도 없다면, `Vec::new`에서는 어떻게 하죠? 음, 그냥 아무 쓰레기 값이나 집어넣죠!
 
-This is perfectly fine because we already have `cap == 0` as our sentinel for no
-allocation. We don't even need to handle it specially in almost any code because
-we usually need to check if `cap > len` or `len > 0` anyway. The recommended
-Rust value to put here is `mem::align_of::<T>()`. `NonNull` provides a convenience
-for this: `NonNull::dangling()`. There are quite a few places where we'll
-want to use `dangling` because there's no real allocation to talk about but
-`null` would make the compiler do bad things.
+이렇게 해도 할당이 없을 때 `cap == 0`을 먼저 확인하도록 할 것이기 때문에 전혀 문제가 없습니다. 심지어 우리는 이 경우를 특별히 처리할 필요도 거의 없는데, 어차피 보통 우리는 `cap > len`이나 `len > 0`을 확인할 필요가 있기 때문입니다. 여기에 들어가기에 추천되는 러스트 값은 `mem::align_of::<T>()`입니다. `NonNull`에서는 이것을 위한 편리 함수를 제공합니다: `NonNull::dangling()`입니다. 우리는 꽤 많은 곳에서 `dangling`을 사용할 텐데, 실제 할당은 없지만 `null`은 컴파일러가 나쁜 짓을 하도록 만들 것이기 때문입니다.
 
-So:
+그래서:
 
 <!-- ignore: explanation code -->
 ```rust,ignore
@@ -23,7 +12,7 @@ use std::mem;
 
 impl<T> Vec<T> {
     pub fn new() -> Self {
-        assert!(mem::size_of::<T>() != 0, "We're not ready to handle ZSTs");
+        assert!(mem::size_of::<T>() != 0, "우리는 아직 영량 타입을 처리할 준비가 되지 않았습니다!");
         Vec {
             ptr: NonNull::dangling(),
             len: 0,
