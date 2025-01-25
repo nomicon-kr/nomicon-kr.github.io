@@ -43,9 +43,7 @@ else:
     cap *= 2
 ```
 
-But Rust's only supported allocator API is so low level that we'll need to do a
-fair bit of extra work. We also need to guard against some special
-conditions that can occur with really large allocations or empty allocations.
+하지만 러스트에서 유일하게 지원되는 할당자 API는 너무 저수준이라 우리가 좀더 작업을 해야 합니다. 우리는 또한 매우 큰 할당이나 빈 할당으로 인해 일어날 수 있는 특수한 상황들을 방어해야 합니다.
 
 In particular, `ptr::offset` will cause us a lot of trouble, because it has
 the semantics of LLVM's GEP inbounds instruction. If you're fortunate enough to
